@@ -809,6 +809,13 @@ function buildModelProviderMocks(baseTime: number) {
           status: "missing",
           profiles: [],
         },
+        // Local runtime: synthetic loopback auth that never expires and reports no usage.
+        {
+          provider: "ollama",
+          displayName: "Ollama",
+          status: "static",
+          profiles: [{ profileId: "ollama:local", type: "api_key", status: "static" }],
+        },
       ],
     },
     usageStatus: {
@@ -862,6 +869,35 @@ function buildModelProviderMocks(baseTime: number) {
       { id: "gpt-5", name: "GPT-5", provider: "openai", available: true },
       { id: "gemini-3-pro", name: "Gemini 3 Pro", provider: "google", available: false },
       { id: "openrouter/auto", name: "OpenRouter Auto", provider: "openrouter", available: true },
+      {
+        id: "qwen3.5:122b",
+        name: "qwen3.5:122b",
+        provider: "ollama",
+        available: true,
+        local: true,
+        contextWindow: 262_144,
+        input: ["text", "image"],
+        reasoning: true,
+        supportsTools: true,
+      },
+      {
+        id: "qwen2:72b",
+        name: "qwen2:72b",
+        provider: "ollama",
+        available: true,
+        local: true,
+        contextWindow: 32_768,
+        supportsTools: true,
+      },
+      {
+        id: "qwen2.5:7b",
+        name: "qwen2.5:7b",
+        provider: "ollama",
+        available: true,
+        local: true,
+        contextWindow: 32_768,
+        supportsTools: true,
+      },
     ],
   };
 }
