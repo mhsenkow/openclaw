@@ -876,7 +876,6 @@ function buildModelProviderMocks(baseTime: number) {
         available: true,
         local: true,
         contextWindow: 262_144,
-        input: ["text", "image"],
         reasoning: true,
         supportsTools: true,
       },
