@@ -149,7 +149,7 @@ export async function modelsListCommand(
         `Configured ${skipped.length === 1 ? "provider" : "providers"} outside that list ${
           skipped.length === 1 ? "is" : "are"
         } not discovered, so ${skipped.length === 1 ? "its" : "their"} models never appear here. ` +
-        `Add ${skipped.map((provider) => `"${provider}/*"`).join(", ")} to ${allowPath} to discover them.`,
+        `Add ${skipped.map((skippedProvider) => `"${skippedProvider}/*"`).join(", ")} to ${allowPath} to discover them.`,
     );
   }
   const rows = result.models

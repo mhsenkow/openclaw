@@ -30,12 +30,18 @@ function resolveModelPolicyRefProvider(
 export function resolveModelPolicyDiscoveryScope(params: {
   cfg: OpenClawConfig;
   agentId?: string;
-  /** Provider ids the operator configured under `models.providers`. */
-  configuredProviders: readonly string[];
+  /**
+   * Provider ids to test against the allowlist. Defaults to every provider the
+   * operator configured under `models.providers`; pass a narrower list to ask
+   * about specific providers.
+   */
+  configuredProviders?: readonly string[];
   /** Catalog-aware normalizer so plugin provider aliases compare equal. */
   normalizeProvider?: (provider: string) => string;
 }): ModelPolicyDiscoveryScope | undefined {
   const normalizeProvider = params.normalizeProvider ?? normalizeProviderId;
+  const configuredProviders =
+    params.configuredProviders ?? Object.keys(params.cfg.models?.providers ?? {});
   const policy = resolveConfiguredModelPolicyAllow({
     cfg: params.cfg,
     agentId: params.agentId,
@@ -51,7 +57,7 @@ export function resolveModelPolicyDiscoveryScope(params: {
   );
   const skippedProviders = [
     ...new Set(
-      params.configuredProviders
+      configuredProviders
         .map((provider) => normalizeProvider(provider))
         .filter((provider) => provider && !allowedProviders.has(provider)),
     ),

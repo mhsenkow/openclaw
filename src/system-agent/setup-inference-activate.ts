@@ -430,17 +430,17 @@ async function verifyAndActivateCandidate(
   ) {
     // A policy allowlist that never names the staged provider blocks its route.
     // Name that cause instead of reporting a generic route mismatch.
-    const stagedProvider = parseInferenceRef(staged.modelRef).provider;
+    const blockedProvider = parseInferenceRef(staged.modelRef).provider;
     const policyScope = resolveModelPolicyDiscoveryScope({
       cfg: candidate,
       ...(requestedAgentId ? { agentId: requestedAgentId } : {}),
-      configuredProviders: [stagedProvider],
+      configuredProviders: [blockedProvider],
     });
     return failure({
       ok: false,
       status: "unavailable",
       error: policyScope
-        ? `Model restrictions at ${policyScope.configPath} do not list ${stagedProvider}, so ${staged.modelRef} has no usable route. Add "${stagedProvider}/*" to ${policyScope.repairConfigPath.replace("*", requestedAgentId ?? routeAgentId)} and retry.`
+        ? `Model restrictions at ${policyScope.configPath} do not list ${blockedProvider}, so ${staged.modelRef} has no usable route. Add "${blockedProvider}/*" to ${policyScope.repairConfigPath.replace("*", requestedAgentId ?? routeAgentId)} and retry.`
         : "The candidate route does not match the selected provider, model, and credential. Review model runtime policy and retry.",
     });
   }

@@ -484,12 +484,7 @@ export async function prepareModelsListResult(
     !providerFilter || normalizeProvider(entry.provider) === providerFilter;
   const { routeVariants, providerOutcomes } = projector.snapshot;
   const publicProviderOutcomes = projectProviderCatalogOutcomes(providerOutcomes);
-  const discoveryScope = resolveModelPolicyDiscoveryScope({
-    cfg,
-    agentId,
-    configuredProviders: Object.keys(cfg.models?.providers ?? {}),
-    normalizeProvider,
-  });
+  const discoveryScope = resolveModelPolicyDiscoveryScope({ cfg, agentId, normalizeProvider });
   const visibilityPolicy = createModelVisibilityPolicy({
     cfg,
     catalog,
