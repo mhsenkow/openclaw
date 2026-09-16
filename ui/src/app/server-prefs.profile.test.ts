@@ -58,6 +58,7 @@ describe("profile-bound appearance preferences", () => {
       manuscript: true,
       rose: true,
       miami: true,
+      rams: true,
       custom: false,
     };
     for (const [theme, storable] of Object.entries(profileStorable)) {
