@@ -106,6 +106,11 @@ const BUILTIN_THEME_OPTIONS: ThemeOption[] = [
     labelKey: "configView.themes.miami.label",
     descriptionKey: "configView.themes.miami.description",
   },
+  {
+    id: "rams",
+    labelKey: "configView.themes.rams.label",
+    descriptionKey: "configView.themes.rams.description",
+  },
 ];
 
 const ACCENT_PRESETS = [

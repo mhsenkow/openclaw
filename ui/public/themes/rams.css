@@ -1,0 +1,175 @@
+/* Rams palette; selected by index.html and app/theme.ts. */
+
+:root[data-theme="rams"] {
+  /*
+   * Accent — Braun orange on warm neutral graphite. Monochrome surfaces with a
+   * single accent; the secondary is a warm grey rather than a second hue.
+   *
+   * WCAG 2.1 AA audit (bg = #161616, relative luminance ≈ 0.0080):
+   *   --accent #e07a45  contrast ≈ 6.1:1 AA ✓
+   *   --primary-foreground #241004 on #e07a45 button: 6.1:1 ✓
+   *   --destructive-foreground #2a0c0c on #e07070 button: 5.8:1 ✓
+   *   body text --text #cdcdca: 11.4:1 ✓
+   *   worst text pairing --muted on --bg-muted: 4.6:1 ✓
+   */
+  --ring: #e07a45;
+  --accent: #e07a45;
+  --accent-hover: #e88f60;
+  --accent-muted: #e07a45;
+  --accent-subtle: rgba(224, 122, 69, 0.12);
+  --accent-glow: rgba(224, 122, 69, 0.2);
+  --primary: #e07a45;
+  --primary-hover: #e88f60;
+  --primary-foreground: #241004;
+
+  --destructive: #e07070;
+  --destructive-hover: #d85c5c;
+  --destructive-foreground: #2a0c0c;
+
+  --focus: rgba(224, 122, 69, 0.18);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 3px color-mix(in srgb, var(--ring) 75%, transparent);
+  --focus-glow: 0 0 0 2px var(--bg), 0 0 0 3px var(--ring), 0 0 16px var(--accent-glow);
+
+  --bg: #161616;
+  --bg-accent: #1a1a1a;
+  --bg-elevated: #1c1c1c;
+  --bg-hover: #222222;
+  --bg-muted: #222222;
+
+  --card: #1c1c1c;
+  --card-foreground: #f0f0ee;
+  --card-highlight: rgba(240, 240, 238, 0.04);
+  --popover: #1c1c1c;
+  --popover-foreground: #f0f0ee;
+
+  --panel: #161616;
+  --panel-strong: #1c1c1c;
+  --panel-hover: #222222;
+  --chrome: rgba(22, 22, 22, 0.96);
+  --chrome-strong: rgba(22, 22, 22, 0.98);
+
+  --text: #cdcdca;
+  --text-strong: #f0f0ee;
+  --chat-text: #cdcdca;
+  --muted: #8a8a86;
+  --muted-strong: #9a9a95;
+  --muted-foreground: #8a8a86;
+
+  --border: #252525;
+  --border-strong: #333333;
+  --border-hover: #454545;
+  --input: #252525;
+
+  --secondary: #1c1c1c;
+  --secondary-foreground: #f0f0ee;
+  --accent-2: #a8a49e;
+  --accent-2-muted: rgba(168, 164, 158, 0.7);
+  --accent-2-subtle: rgba(168, 164, 158, 0.12);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.7);
+  --overlay-shadow: var(--shadow-md);
+
+  --grid-line: rgba(240, 240, 238, 0.04);
+
+  /* Rams motion — decelerate, short, no bounce. The spring token is
+     deliberately overshoot-free here; nothing in this theme bounces. */
+  --duration-fast: 140ms;
+  --duration-normal: 220ms;
+  --duration-slow: 320ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --font-body: Helvetica, "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-body);
+  --font-chat: var(--font-body);
+}
+
+:root[data-theme="rams-light"] {
+  /*
+   * Accent — Braun orange darkened to clear AA on paper. The literal #c45c26
+   * reads 3.8:1 here, which fails normal-size text and button labels, so the
+   * hue is retained at a lower value the same way the claw light terracotta is.
+   *
+   * WCAG 2.1 AA audit (bg = #f2f2f0, relative luminance ≈ 0.8867):
+   *   --accent #ad4c1c  contrast ≈ 4.9:1 AA ✓
+   *   --primary-foreground #ffffff on #ad4c1c button: 5.5:1 ✓
+   *   --destructive-foreground #ffffff on #b91c1c button: 6.5:1 ✓
+   *   body text --text #333333: 11.3:1 ✓
+   *   worst text pairing --muted on --bg-muted: 4.8:1 ✓
+   */
+  --ring: #ad4c1c;
+  --accent: #ad4c1c;
+  --accent-hover: #974217;
+  --accent-muted: #ad4c1c;
+  --accent-subtle: rgba(173, 76, 28, 0.09);
+  --accent-glow: rgba(173, 76, 28, 0.14);
+  --primary: #ad4c1c;
+  --primary-foreground: #ffffff;
+
+  --destructive: #b91c1c;
+  --destructive-hover: #a11818;
+
+  --bg: #f2f2f0;
+  --bg-accent: #eaeae7;
+  --bg-elevated: #fafaf8;
+  --bg-hover: #e6e6e3;
+  --bg-muted: #e6e6e3;
+  --bg-content: #eeeeeb;
+
+  --card: #fafaf8;
+  --card-foreground: #111111;
+  --card-highlight: rgba(17, 17, 17, 0.02);
+  --popover: #fafaf8;
+  --popover-foreground: #111111;
+  --session-hovercard-surface: var(--card);
+  --session-hovercard-progress-surface: color-mix(
+    in srgb,
+    var(--card) 52%,
+    var(--panel-strong) 48%
+  );
+
+  --panel: #f2f2f0;
+  --panel-strong: #e6e6e3;
+  --panel-hover: #dcdcd8;
+  --chrome: rgba(242, 242, 240, 0.96);
+  --chrome-strong: rgba(242, 242, 240, 0.98);
+
+  --text: #333333;
+  --text-strong: #111111;
+  --chat-text: #333333;
+  --muted: #63635f;
+  --muted-strong: #52524e;
+  --muted-foreground: #63635f;
+
+  --border: #e4e4e0;
+  --border-strong: #c4c4c0;
+  --border-hover: #a5a5a0;
+  --input: #e4e4e0;
+
+  --secondary: #e6e6e3;
+  --secondary-foreground: #333333;
+  --accent-2: #6b655c;
+  --accent-2-muted: rgba(107, 101, 92, 0.75);
+  --accent-2-subtle: rgba(107, 101, 92, 0.1);
+
+  --shadow-sm: 0 1px 2px rgba(17, 17, 17, 0.05);
+  --shadow-md: 0 4px 12px rgba(17, 17, 17, 0.07);
+  --shadow-lg: 0 12px 28px rgba(17, 17, 17, 0.09);
+  --overlay-shadow: var(--shadow-md);
+
+  --grid-line: rgba(17, 17, 17, 0.04);
+
+  --duration-fast: 140ms;
+  --duration-normal: 220ms;
+  --duration-slow: 320ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --font-body: Helvetica, "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-body);
+  --font-chat: var(--font-body);
+}

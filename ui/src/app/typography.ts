@@ -54,6 +54,9 @@ export const THEME_TYPEFACES = {
   manuscript: { ui: "lora", chat: "lora" },
   rose: { ui: "dm-sans", chat: "dm-sans" },
   miami: { ui: "space-grotesk", chat: "space-grotesk" },
+  // Helvetica is the theme's own stack in rams.css; `system` keeps any webfont
+  // from loading over it while still declaring the shared mono face.
+  rams: { ui: "system", chat: "system" },
   custom: { ui: "system", chat: "system" },
 } satisfies Record<ThemeName, TypefacePair>;
 

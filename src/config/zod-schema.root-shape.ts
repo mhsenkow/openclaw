@@ -212,6 +212,7 @@ export const OpenClawSchemaShape = {
               z.literal("manuscript"),
               z.literal("rose"),
               z.literal("miami"),
+              z.literal("rams"),
               z.literal("custom"),
             ])
             .optional(),

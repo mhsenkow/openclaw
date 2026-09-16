@@ -867,6 +867,10 @@ const enSettings = {
         label: "Miami",
         description: "Magenta & cyan",
       },
+      rams: {
+        label: "Rams",
+        description: "Graphite & orange",
+      },
     },
     textSizes: {
       small: "Small",
