@@ -31,6 +31,7 @@ import {
 } from "../../agents/model-catalog-visibility.js";
 import type { ModelCatalogSnapshot, ModelCatalogEntry } from "../../agents/model-catalog.types.js";
 import { createModelFastModeResolver } from "../../agents/model-fast-mode.js";
+import { resolveModelPolicyDiscoveryScope } from "../../agents/model-policy-discovery-scope.js";
 import { modelKey } from "../../agents/model-ref-shared.js";
 import { resolveDefaultModelForAgent } from "../../agents/model-selection-config.js";
 import { dedupeModelCatalogEntries } from "../../agents/model-selection-shared.js";
@@ -483,6 +484,12 @@ export async function prepareModelsListResult(
     !providerFilter || normalizeProvider(entry.provider) === providerFilter;
   const { routeVariants, providerOutcomes } = projector.snapshot;
   const publicProviderOutcomes = projectProviderCatalogOutcomes(providerOutcomes);
+  const discoveryScope = resolveModelPolicyDiscoveryScope({
+    cfg,
+    agentId,
+    configuredProviders: Object.keys(cfg.models?.providers ?? {}),
+    normalizeProvider,
+  });
   const visibilityPolicy = createModelVisibilityPolicy({
     cfg,
     catalog,
@@ -503,6 +510,7 @@ export async function prepareModelsListResult(
   draft?.assertCurrent();
   const outcomeProjection = {
     ...(pendingProviders?.length ? { pendingProviders } : {}),
+    ...(discoveryScope ? { modelPolicyDiscoveryScope: discoveryScope } : {}),
     ...((params.params.includeDefaultModels ??
     (view === "configured" && !params.params.sessionKey && !params.params.authProfileId))
       ? {

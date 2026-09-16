@@ -1,5 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
-import { resolveMutableAgentEntry } from "../../agents/agent-scope-config.js";
+import { applyModelPolicyProviderAllowance } from "../../agents/model-policy-allowance.js";
 import { normalizeProviderId } from "../../agents/model-ref-shared.js";
 import {
   LEGACY_MODEL_POLICY_ALLOW_CONFIG_PATH,
@@ -7,7 +7,6 @@ import {
 } from "../../agents/model-selection-shared.js";
 import { logConfigUpdated } from "../../config/logging.js";
 import { normalizeAgentModelRefForConfig } from "../../config/model-input.js";
-import { materializeModelPolicyAllowlist } from "../../config/model-policy-allowlist-migration.js";
 import { parseModelPolicyWildcardRef } from "../../config/model-policy-ref.js";
 import {
   attachRuntimeConfigWriteApplication,
@@ -143,28 +142,10 @@ export async function completeProviderModelAccess(params: {
       if (!isDeepStrictEqual(snapshotPolicy(config, prepared.agentId), prepared.policy)) {
         throw new ProviderModelPolicyChangedError(config);
       }
-      const policy = resolveConfiguredModelPolicyAllow({ cfg: config, agentId: prepared.agentId });
-      const allow = [...policy.refs, `${prepared.provider}/*`];
-      if (policy.repairConfigPath === "agents.entries.*.modelPolicy.allow") {
-        const agent = resolveMutableAgentEntry(config, prepared.agentId);
-        if (!agent) {
-          throw new Error(`Agent "${prepared.agentId}" no longer exists.`);
-        }
-        agent.modelPolicy = { ...agent.modelPolicy, allow };
-      } else {
-        config.agents ??= {};
-        config.agents.defaults ??= {};
-        const defaults = config.agents.defaults;
-        if (
-          policy.configPath === LEGACY_MODEL_POLICY_ALLOW_CONFIG_PATH &&
-          materializeModelPolicyAllowlist(config).kind === "deferred"
-        ) {
-          defaults.models = { ...defaults.models, [`${prepared.provider}/*`]: {} };
-        } else {
-          defaults.modelPolicy = { ...defaults.modelPolicy, allow };
-        }
-      }
-      return config;
+      return applyModelPolicyProviderAllowance(config, {
+        provider: prepared.provider,
+        agentId: prepared.agentId,
+      });
     },
     undefined,
     params.beforeCommit,

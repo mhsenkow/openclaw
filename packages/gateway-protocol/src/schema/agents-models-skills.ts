@@ -405,6 +405,17 @@ export const ModelCatalogProviderOutcomeSchema = closedObject({
   ]),
 });
 
+/**
+ * Configured providers the active model-policy allowlist excludes from live
+ * discovery. The allowlist also scopes which providers are contacted, so an
+ * unnamed provider yields an empty catalog rather than a filtered one.
+ */
+export const ModelPolicyDiscoveryScopeSchema = closedObject({
+  configPath: NonEmptyString,
+  repairConfigPath: NonEmptyString,
+  skippedProviders: Type.Array(NonEmptyString, { minItems: 1 }),
+});
+
 export const ModelsListResultSchema = closedObject({
   models: Type.Array(ModelChoiceSchema),
   defaultModels: Type.Optional(
@@ -417,6 +428,7 @@ export const ModelsListResultSchema = closedObject({
   pendingProviders: Type.Optional(Type.Array(NonEmptyString)),
   accountSelection: Type.Optional(ChatAccountSelectionSchema),
   providerOutcomes: Type.Optional(Type.Array(ModelCatalogProviderOutcomeSchema)),
+  modelPolicyDiscoveryScope: Type.Optional(ModelPolicyDiscoveryScopeSchema),
 });
 
 /** Runs a bounded live credential probe for one model provider. */
@@ -1532,6 +1544,7 @@ export type ModelChoice = Static<typeof ModelChoiceSchema>;
 export type ModelRuntimeChoice = Static<typeof ModelRuntimeChoiceSchema>;
 export type ModelsListParams = Static<typeof ModelsListParamsSchema>;
 export type ModelCatalogProviderOutcome = Static<typeof ModelCatalogProviderOutcomeSchema>;
+export type ModelPolicyDiscoveryScope = Static<typeof ModelPolicyDiscoveryScopeSchema>;
 export type ModelsListResult = Static<typeof ModelsListResultSchema>;
 export type ModelsAuthSetApiKeyParams = Static<typeof ModelsAuthSetApiKeyParamsSchema>;
 export type ModelsAuthSetApiKeyResult = Static<typeof ModelsAuthSetApiKeyResultSchema>;

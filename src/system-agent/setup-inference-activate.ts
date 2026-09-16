@@ -5,6 +5,9 @@ import { resolveAgentDir } from "../agents/agent-scope.js";
 import type { SetupRuntimeCredential } from "../agents/auth-profiles/setup-access.js";
 import { loadAuthProfileStoreWithoutExternalProfiles } from "../agents/auth-profiles/store-runtime.js";
 import { resolveCliRuntimeCanonicalProvider } from "../agents/cli-backends.js";
+import { applyModelPolicyProviderAllowance } from "../agents/model-policy-allowance.js";
+import { resolveModelPolicyDiscoveryScope } from "../agents/model-policy-discovery-scope.js";
+import { prepareProviderModelAccess } from "../commands/models/auth-model-policy.js";
 import {
   ANTHROPIC_API_DEFAULT_MODEL_REF,
   CLAUDE_CLI_DEFAULT_MODEL_REF,
@@ -326,11 +329,29 @@ async function verifyAndActivateCandidate(
       ? { requested: params.nativeSessionCatalogsEnabled }
       : {}),
   });
+  // A policy allowlist that never names the staged provider blocks its route and
+  // starves its discovery. Ask for the same consent the sign-in flow asks for,
+  // then fold the allowance into this flow's single candidate write.
+  const stagedProvider = parseInferenceRef(staged.modelRef).provider;
+  const modelAccess = prepareProviderModelAccess({
+    config: staged.config,
+    agentId: routeAgentId,
+    provider: stagedProvider,
+    providerLabel: stagedProvider,
+  });
+  const stagedConfig =
+    modelAccess && params.prompter && (await params.prompter.select(modelAccess.prompt)) === "all"
+      ? applyModelPolicyProviderAllowance(structuredClone(staged.config), {
+          provider: stagedProvider,
+          agentId: routeAgentId,
+        })
+      : staged.config;
+  throwIfSetupInferenceCancelled(params);
   const prepared =
     catalogPreference === undefined
-      ? staged.config
+      ? stagedConfig
       : applySetupNativeSessionCatalogPreference({
-          config: staged.config,
+          config: stagedConfig,
           enabled: catalogPreference,
           workspaceDir: ctx.workspace,
         });
@@ -407,11 +428,20 @@ async function verifyAndActivateCandidate(
     route.modelLabel !== staged.modelRef ||
     (staged.authProfileId && route.authProfileId !== staged.authProfileId)
   ) {
+    // A policy allowlist that never names the staged provider blocks its route.
+    // Name that cause instead of reporting a generic route mismatch.
+    const stagedProvider = parseInferenceRef(staged.modelRef).provider;
+    const policyScope = resolveModelPolicyDiscoveryScope({
+      cfg: candidate,
+      ...(requestedAgentId ? { agentId: requestedAgentId } : {}),
+      configuredProviders: [stagedProvider],
+    });
     return failure({
       ok: false,
       status: "unavailable",
-      error:
-        "The candidate route does not match the selected provider, model, and credential. Review model runtime policy and retry.",
+      error: policyScope
+        ? `Model restrictions at ${policyScope.configPath} do not list ${stagedProvider}, so ${staged.modelRef} has no usable route. Add "${stagedProvider}/*" to ${policyScope.repairConfigPath.replace("*", requestedAgentId ?? routeAgentId)} and retry.`
+        : "The candidate route does not match the selected provider, model, and credential. Review model runtime policy and retry.",
     });
   }
   const baselineRoute = await project(cfg, source);

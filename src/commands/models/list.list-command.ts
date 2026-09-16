@@ -138,6 +138,20 @@ export async function modelsListCommand(
       "Model discovery could not refresh all providers. Showing the available published model list.",
     );
   }
+  const discoveryScope = result.modelPolicyDiscoveryScope;
+  if (discoveryScope && !opts.json && !opts.plain) {
+    const skipped = discoveryScope.skippedProviders;
+    const allowPath = opts.agent?.trim()
+      ? discoveryScope.repairConfigPath.replace("*", opts.agent.trim())
+      : discoveryScope.repairConfigPath;
+    runtime.error(
+      `Model restrictions at ${discoveryScope.configPath} do not list ${skipped.join(", ")}. ` +
+        `Configured ${skipped.length === 1 ? "provider" : "providers"} outside that list ${
+          skipped.length === 1 ? "is" : "are"
+        } not discovered, so ${skipped.length === 1 ? "its" : "their"} models never appear here. ` +
+        `Add ${skipped.map((provider) => `"${provider}/*"`).join(", ")} to ${allowPath} to discover them.`,
+    );
+  }
   const rows = result.models
     .filter((model) => !opts.local || model.local === true)
     .map(toCliModelRow);
