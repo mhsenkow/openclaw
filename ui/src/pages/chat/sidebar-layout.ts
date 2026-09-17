@@ -39,6 +39,7 @@ export {
 
 const SIDEBAR_DEFAULT_WIDTH_PX = 480;
 const SIDEBAR_DEFAULT_HEIGHT_PX = 360;
+const SIDEBAR_AGENT_DEFAULT_WIDTH_PX = 260;
 export const SIDEBAR_GEOMETRY_COMMIT_EVENT = "openclaw-sidebar-geometry-commit";
 
 function createSidebarColumn(): SidebarColumn {
@@ -50,6 +51,16 @@ function createSidebarColumn(): SidebarColumn {
     height: SIDEBAR_DEFAULT_HEIGHT_PX,
     width: SIDEBAR_DEFAULT_WIDTH_PX,
   };
+}
+
+/** First-run chat layout: Agent panel open at muse width. */
+export function createDefaultAgentSidebarLayout(): SidebarLayout {
+  const layout = openSlot({ columns: [] }, "agent");
+  const column = layout.columns[0];
+  if (column) {
+    column.width = SIDEBAR_AGENT_DEFAULT_WIDTH_PX;
+  }
+  return layout;
 }
 
 /** Logical presentation, independent of responsive/narrow viewport projection. */

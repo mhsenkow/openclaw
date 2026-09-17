@@ -111,7 +111,7 @@ describeControlUiE2e("Control UI Markdown table interactions", () => {
       try {
         await page.goto(`${server.baseUrl}chat`);
         if (surface === "assistant panel") {
-          await page.locator(".sidebar-brand__search").click();
+          await page.locator(".sidebar-rail__button[aria-label='Open command palette']").click();
           await page.getByPlaceholder("Search chats and commands…").fill("Ask OpenClaw");
           await page.getByRole("option", { name: "Ask OpenClaw", exact: true }).click();
         }

@@ -322,10 +322,18 @@ describe("chat pane composer controls", () => {
       render(controls.composerControls, container);
 
       expect(Array.from(container.children).map((node) => node.className)).toEqual([
-        "chat-composer-model-control",
+        "chat-composer-options",
       ]);
       expect(container.querySelector('[data-chat-provider-usage="true"]')).toBeNull();
-      expect(container.querySelector('[data-chat-permission-select="true"]')).toBeNull();
+      expect(
+        container.querySelector(
+          '.chat-composer-options__menu [data-chat-permission-select="true"]',
+        ),
+      ).not.toBeNull();
+      expect(
+        container.querySelector('.chat-composer-options__menu [data-chat-permission-select="true"]')
+          ?.textContent,
+      ).toContain("Default (Guarded)");
       const catalogMessage = container.querySelector(".chat-controls__model-catalog-state");
       if (message) {
         expect(catalogMessage?.textContent).toContain(message);
@@ -336,14 +344,7 @@ describe("chat pane composer controls", () => {
         container.querySelector('[data-chat-model-select="true"]')?.getAttribute("aria-disabled"),
       ).toBe(String(!connected));
       expect(container.querySelectorAll("[data-chat-model-option]")).toHaveLength(cached ? 1 : 0);
-      const permissionContainer = document.createElement("div");
-      render(renderChatPermissionPicker(controls.permissionPicker), permissionContainer);
-      expect(
-        permissionContainer.querySelector('[data-chat-permission-select="true"]'),
-      ).not.toBeNull();
-      expect(
-        permissionContainer.querySelector('[data-chat-permission-select="true"]')?.textContent,
-      ).toContain("Default (Guarded)");
+      expect(controls.permissionPicker?.defaultMode).toBe("guarded");
       container.querySelector<HTMLButtonElement>('[data-chat-model-setup="true"]')?.click();
       expect(onModelSetup).toHaveBeenCalledTimes(error ? 0 : 1);
     },

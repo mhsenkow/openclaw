@@ -40,6 +40,7 @@ import {
   type SidebarSessionCatalog,
 } from "./app-sidebar-session-catalogs.ts";
 import { renderSidebarSessionSectionHeader } from "./app-sidebar-session-section-header.ts";
+import { isSidebarSessionSectionCollapsed } from "./app-sidebar-session-types.ts";
 import { icons } from "./icons.ts";
 import { renderNewSessionLink } from "./new-session-link.ts";
 import { hasProviderBrandIcon, renderProviderBrandIcon } from "./provider-icon.ts";
@@ -173,7 +174,7 @@ export function renderSessionCatalogGroups(params: SessionCatalogGroupsParams) {
   }
   return params.catalogs.map((catalog) => {
     const sectionId = `catalog:${catalog.id}`;
-    const collapsed = params.collapsedSections.has(sectionId);
+    const collapsed = isSidebarSessionSectionCollapsed(params.collapsedSections, sectionId);
     const rows = catalog.visibleHosts.flatMap((host) => host.sessions);
     const liveRows = rows.flatMap((session) => {
       const row = session.sessionKey ? liveRowsByKey.get(session.sessionKey) : undefined;
@@ -223,6 +224,7 @@ export function renderSessionCatalogGroups(params: SessionCatalogGroupsParams) {
       >
         ${renderSidebarSessionSectionHeader({
           sectionId,
+          kind: "catalog",
           disabledReason: params.sectionDragDisabledReason,
           onStartDrag: params.onStartSectionDrag,
           onFinishDrag: params.onFinishSectionDrag,

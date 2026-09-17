@@ -114,9 +114,8 @@ export function navigationSurfaceIsHidden(params: {
   navDrawerOpen: boolean;
   mobileNavLayout: boolean;
 }): boolean {
-  return (
-    params.onboarding || (params.mobileNavLayout ? !params.navDrawerOpen : params.navCollapsed)
-  );
+  // Desktop collapse only hides the list column; the icon rail stays mounted.
+  return params.onboarding || (params.mobileNavLayout && !params.navDrawerOpen);
 }
 
 export function floatingSidebarAttentionVisible(params: {

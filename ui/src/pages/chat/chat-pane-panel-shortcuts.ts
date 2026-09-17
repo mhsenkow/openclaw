@@ -23,6 +23,7 @@ export const SIDEBAR_PANEL_SHORTCUTS = {
   browser: panel("browser", combos.browserPanel, (c) => c.state?.browserPanelAvailable === true),
   workspace: panel("workspace", combos.workspaceFiles),
   companion: panel("companion", combos.sideChat),
+  agent: panel("agent", combos.agentPanel),
   tasks: panel("tasks", combos.tasksPanel),
   desktop: panel("desktop", combos.desktopPanel, (c) => c.desktopAvailable === true),
   discussion: panel(

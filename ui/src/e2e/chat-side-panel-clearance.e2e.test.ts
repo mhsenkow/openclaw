@@ -158,7 +158,7 @@ async function expectPanelHeaderControlsClearShellChrome(
       .filter((button) => button.bottom > button.top && button.right > button.left);
     const shells = [
       ...document.querySelectorAll(
-        ":is(.shell-chrome-controls, .macos-titlebar-controls, .sidebar-attention--floating) button:not([hidden])",
+        ":is(.shell-chrome-controls, .macos-titlebar-controls, .sidebar-rail openclaw-sidebar-attention) button:not([hidden])",
       ),
     ]
       .map(rect)
@@ -226,18 +226,19 @@ suite.define(() => {
         // The toolbar row sits at the top of the content column in both states.
         await expect.poll(rowCenter).toBe(26);
 
-        await page.locator(".sidebar-brand__collapse").click();
+        await page.locator(".sidebar-rail__nav-toggle").click();
         await expect.poll(() => shell.getAttribute("class")).toContain("shell--nav-collapsed");
         await expect.poll(rowCenter).toBe(26);
-        const controls = page.locator(".shell-chrome-controls button:visible");
+        const controls = page.locator(
+          ".sidebar-rail__button:visible, .sidebar-rail .sidebar-issues-button:visible",
+        );
         const controlBoxes = await controls.evaluateAll((buttons) =>
           buttons.map((button) => button.getBoundingClientRect()),
         );
         expect(controlBoxes.length).toBeGreaterThan(0);
         const tabsBox = (await tabs.boundingBox())!;
         for (const box of controlBoxes) {
-          expect(box.top + box.height / 2).toBe(26);
-          expect(box.right).toBeLessThan(tabsBox.x);
+          expect(box.right).toBeLessThanOrEqual(tabsBox.x);
         }
       },
     );
@@ -249,7 +250,7 @@ suite.define(() => {
       home: false,
       deviceLess: false,
       direction: "ltr",
-      expectedControl: ".sidebar-brand__search",
+      expectedControl: ".sidebar-rail__button[aria-label='Open command palette']",
       name: "expanded navigation",
       navCollapsed: false,
       operatorScopes: undefined,
@@ -261,7 +262,7 @@ suite.define(() => {
       home: false,
       deviceLess: false,
       direction: "ltr",
-      expectedControl: ".shell-chrome-controls__search",
+      expectedControl: ".sidebar-rail__button[aria-label='Open command palette']",
       name: "collapsed navigation",
       navCollapsed: true,
       operatorScopes: undefined,
@@ -273,7 +274,7 @@ suite.define(() => {
       home: true,
       deviceLess: false,
       direction: "ltr",
-      expectedControl: ".shell-chrome-controls__home",
+      expectedControl: ".sidebar-rail .sidebar-issues-button",
       name: "collapsed navigation with Home and attention",
       navCollapsed: true,
       operatorScopes: undefined,
@@ -285,7 +286,7 @@ suite.define(() => {
       home: false,
       deviceLess: true,
       direction: "rtl",
-      expectedControl: ".sidebar-attention--floating .sidebar-issues-button",
+      expectedControl: ".sidebar-rail .sidebar-issues-button",
       name: "collapsed RTL limited-access status and attention",
       navCollapsed: true,
       operatorScopes: limitedScopes,
@@ -317,11 +318,11 @@ suite.define(() => {
           document.documentElement.dir = direction;
         }, testCase.direction);
         if (testCase.navCollapsed) {
-          await page.locator(".sidebar-brand__collapse").click();
+          await page.locator(".sidebar-rail__nav-toggle").click();
           await expect
             .poll(() => page.locator(".shell").getAttribute("class"))
             .toContain("shell--nav-collapsed");
-          await page.locator(".sidebar-attention--floating .sidebar-issues-button").waitFor();
+          await page.locator(".sidebar-rail .sidebar-issues-button").waitFor();
         }
         await page.locator(testCase.expectedControl).waitFor();
         await waitForShellLayout(page);

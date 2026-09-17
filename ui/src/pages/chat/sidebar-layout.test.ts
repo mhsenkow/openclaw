@@ -3,6 +3,7 @@ import {
   SIDEBAR_MIN_WIDTH_PX,
   activatePanel,
   closeSlot,
+  createDefaultAgentSidebarLayout,
   ensureSidebarConversation,
   fitSidebarLayout,
   isSidebarSlotVisible,
@@ -387,6 +388,17 @@ describe("sidebar layout", () => {
       expect(normalizeSidebarLayout(layout)).toEqual(layout);
     },
   );
+
+  it("seeds a first-run agent panel at muse width", () => {
+    const layout = createDefaultAgentSidebarLayout();
+    expect(isSidebarSlotVisible(layout, "agent")).toBe(true);
+    expect(layout.columns[0]?.width).toBe(260);
+    expect(normalizeSidebarLayout(layout)).toEqual({
+      ...layout,
+      dock: "right",
+      expanded: false,
+    });
+  });
 
   it("deduplicates slots and repairs untrusted persisted values", () => {
     expect(normalizeSidebarLayout(null)).toEqual({ columns: [], open: false, expanded: false });

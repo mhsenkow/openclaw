@@ -13,9 +13,11 @@ import "./session-menu.ts";
 import "./sidebar-agent-card.ts";
 import "./sidebar-attention.ts";
 import { createIdleImport } from "../lib/idle-import.ts";
-import { shouldHandleNavigationClick } from "../lib/navigation-click.ts";
+import { formatKeyboardShortcutCombo } from "../lib/keyboard-shortcut-catalog.ts";
 import "./theme-mode-toggle.ts";
 import "./tooltip.ts";
+import { KEYBOARD_SHORTCUT_COMBOS } from "../lib/keyboard-shortcut-contract.ts";
+import { shouldHandleNavigationClick } from "../lib/navigation-click.ts";
 import {
   buildCatalogSessionKey,
   catalogSessionKeyFromSearch,
@@ -23,17 +25,18 @@ import {
 } from "../lib/sessions/catalog-key.ts";
 import type { CatalogProjectGrouping } from "../lib/sessions/catalog-project-grouping.ts";
 import { showToast } from "../lib/toast.ts";
-import { SubscriptionsController } from "../lit/subscriptions-controller.ts";
-import { SETTINGS_ROUTE_TARGETS } from "../pages/config/route-data.ts";
 import "../plugins/control-ui-contributions.ts";
-import { renderPluginSurface } from "../plugins/control-ui-view.ts";
+import { SubscriptionsController } from "../lit/subscriptions-controller.ts";
 import "../styles/app-sidebar.css";
+import { SETTINGS_ROUTE_TARGETS } from "../pages/config/route-data.ts";
+import { renderPluginSurface } from "../plugins/control-ui-view.ts";
 import {
+  renderAppSidebarAttention,
   renderAppSidebarBrand,
-  renderAppSidebarFooterBar,
   renderAppSidebarHomeRow,
   renderAppSidebarOnline,
   renderAppSidebarPagesHead,
+  renderAppSidebarRailIdentity,
   renderAppSidebarZoneEntry,
 } from "./app-sidebar-render.ts";
 import type { SessionCatalogGroupsRenderer } from "./app-sidebar-session-catalog-render.ts";
@@ -55,6 +58,7 @@ import {
   visibleSessionChildren,
 } from "./app-sidebar-session-row-render.ts";
 import {
+  isSidebarSessionSectionCollapsed,
   loadStoredHiddenSessionCatalogIds,
   loadStoredSidebarCatalogGrouping,
   SIDEBAR_HIDDEN_SESSION_CATALOGS_CHANGED_EVENT,
@@ -438,7 +442,7 @@ class AppSidebar extends AppSidebarSessionNavigationElement implements SessionLi
   }
 
   toggleSection(sectionId: string): void {
-    if (!this.collapsedSessionSections.has(sectionId)) {
+    if (!isSidebarSessionSectionCollapsed(this.collapsedSessionSections, sectionId)) {
       this.sessionProjection.resetMembership(sectionId);
     }
     this.sessionOrganizer.toggleSection(sectionId);
@@ -611,9 +615,10 @@ class AppSidebar extends AppSidebarSessionNavigationElement implements SessionLi
 
   override render() {
     const sidebarZone = this.reconciledSidebarZone();
+    const listCollapsed = this.listCollapsed === true;
     return html`
       <aside
-        class="sidebar"
+        class="sidebar ${listCollapsed ? "sidebar--list-collapsed" : ""}"
         @pointerleave=${this.handleSidebarInteractionEnd}
         @focusout=${this.handleSidebarInteractionEnd}
         @contextmenu=${(event: MouseEvent) => {
@@ -623,67 +628,105 @@ class AppSidebar extends AppSidebarSessionNavigationElement implements SessionLi
           }
         }}
       >
-        <div class="sidebar-shell" @mousedown=${beginNativeWindowDragFromTopInset}>
-          ${renderAppSidebarBrand(
-            this,
-            this.sidebarAgentsMode === "roster"
-              ? this.rosterRenderer?.renderSidebarNewSessionMenu(
-                  this,
-                  "sidebar-brand__icon sidebar-brand__header-control sidebar-brand__new-thread",
-                )
-              : nothing,
-          )}
-          <div class="sidebar-shell__content">
-            <div
-              class="sidebar-shell__body sidebar-shell__body--scroll-${this.sessionData.sessionsScrollState}"
-              @scroll=${(event: Event) => this.sidebarContext.handleScroll(event)}
-            >
-              <nav
-                class="sidebar-nav"
-                @contextmenu=${this.sidebarMenus.openCustomizeMenuFromContext}
+        <div
+          class="sidebar-shell sidebar-shell--rail-list"
+          @mousedown=${beginNativeWindowDragFromTopInset}
+        >
+          <nav class="sidebar-rail" aria-label=${t("nav.askOpenClaw")}>
+            <div class="sidebar-rail__top">
+              <openclaw-tooltip
+                .content=${`${
+                  listCollapsed ? t("nav.expand") : t("nav.collapse")
+                } (${formatKeyboardShortcutCombo(KEYBOARD_SHORTCUT_COMBOS.toggleSidebar)})`}
               >
-                ${renderAppSidebarPagesHead(this)}
-                <div
-                  class="nav-section__items"
-                  @dragover=${(event: DragEvent) =>
-                    this.sessionOrganizer.handleSidebarZoneDragOver(event)}
-                  @dragleave=${(event: DragEvent) =>
-                    this.sessionOrganizer.handleSidebarZoneDragLeave(event)}
-                  @drop=${(event: DragEvent) => this.sessionOrganizer.handleSidebarZoneDrop(event)}
+                <button
+                  type="button"
+                  class="sidebar-rail__button sidebar-rail__nav-toggle"
+                  aria-label=${listCollapsed ? t("nav.expand") : t("nav.collapse")}
+                  aria-expanded=${String(!listCollapsed)}
+                  ?disabled=${!this.onToggleSidebar}
+                  @click=${() => this.onToggleSidebar?.()}
                 >
-                  ${renderAppSidebarHomeRow(this)}
-                  ${sidebarZone.entries
-                    .filter(
-                      (entry) => this.sidebarAgentsMode !== "roster" || entry.type !== "session",
-                    )
-                    .map((entry) =>
-                      renderAppSidebarZoneEntry(
-                        this,
-                        entry,
-                        sidebarZone.sessionRows,
-                        sidebarZone.pluginTabs,
-                      ),
-                    )}
-                </div>
-              </nav>
-              <div class="sidebar-session-content" ?hidden=${Boolean(this.contextualSidebar)}>
-                ${renderAppSidebarOnline(this)} ${this.renderSessions()}
+                  ${listCollapsed ? icons.panelLeftOpen : icons.panelLeftClose}
+                </button>
+              </openclaw-tooltip>
+              <openclaw-tooltip
+                .content=${`${t("chat.openCommandPalette")} (${formatKeyboardShortcutCombo(KEYBOARD_SHORTCUT_COMBOS.commandPalette)})`}
+              >
+                <button
+                  type="button"
+                  class="sidebar-rail__button"
+                  aria-label=${t("chat.openCommandPalette")}
+                  ?disabled=${!this.onOpenPalette}
+                  @click=${() => this.onOpenPalette?.()}
+                >
+                  ${icons.search}
+                </button>
+              </openclaw-tooltip>
+              <div class="sidebar-rail__pins">
+                ${renderAppSidebarHomeRow(this)}
+                ${sidebarZone.entries
+                  .filter(
+                    (entry) => this.sidebarAgentsMode !== "roster" || entry.type !== "session",
+                  )
+                  .map((entry) =>
+                    renderAppSidebarZoneEntry(
+                      this,
+                      entry,
+                      sidebarZone.sessionRows,
+                      sidebarZone.pluginTabs,
+                    ),
+                  )}
               </div>
-              ${this.contextualSidebar?.render(this.contextualSidebar.data, this.contextualSidebar.loaderPending, true) ?? nothing}
+              ${renderAppSidebarPagesHead(this)}
             </div>
-            ${
-              this.contextualSidebar || this.sessionsStatusFilter === "archived"
-                ? nothing
-                : renderPanelRefreshStatus({
-                    status: this.sessionData.sessionCatalogRefreshStatus,
-                    className: "sidebar-session-error sidebar-session-catalog-error",
-                  })
-            }
-          </div>
-          <div class="sidebar-shell__invite">
-            ${this.communityInvitePresentation === "shown" ? renderCommunityInviteCard(this.dismissCommunityInvite) : nothing}
-          </div>
-          <div class="sidebar-shell__footer">
+            <div class="sidebar-rail__bottom">
+              ${renderAppSidebarAttention(this)}
+              <openclaw-tooltip .content=${t("nav.settings")}>
+                <button
+                  type="button"
+                  class="sidebar-rail__button"
+                  aria-label=${t("nav.settings")}
+                  @click=${() => this.onNavigate?.("settings")}
+                >
+                  ${icons.settings}
+                </button>
+              </openclaw-tooltip>
+              ${renderAppSidebarRailIdentity(this)}
+            </div>
+          </nav>
+          <div class="sidebar-list">
+            ${renderAppSidebarBrand(
+              this,
+              this.sidebarAgentsMode === "roster"
+                ? this.rosterRenderer?.renderSidebarNewSessionMenu(
+                    this,
+                    "sidebar-brand__icon sidebar-brand__header-control sidebar-brand__new-thread",
+                  )
+                : nothing,
+            )}
+            <div class="sidebar-shell__content">
+              <div
+                class="sidebar-shell__body sidebar-shell__body--scroll-${this.sessionData.sessionsScrollState}"
+                @scroll=${(event: Event) => this.sidebarContext.handleScroll(event)}
+              >
+                <div class="sidebar-session-content" ?hidden=${Boolean(this.contextualSidebar)}>
+                  ${renderAppSidebarOnline(this)} ${this.renderSessions()}
+                </div>
+                ${this.contextualSidebar?.render(this.contextualSidebar.data, this.contextualSidebar.loaderPending, true) ?? nothing}
+              </div>
+              ${
+                this.contextualSidebar || this.sessionsStatusFilter === "archived"
+                  ? nothing
+                  : renderPanelRefreshStatus({
+                      status: this.sessionData.sessionCatalogRefreshStatus,
+                      className: "sidebar-session-error sidebar-session-catalog-error",
+                    })
+              }
+            </div>
+            <div class="sidebar-shell__invite">
+              ${this.communityInvitePresentation === "shown" ? renderCommunityInviteCard(this.dismissCommunityInvite) : nothing}
+            </div>
             ${
               this.devGitBranch
                 ? html`<openclaw-tooltip .content=${this.devGitBranch}>
@@ -696,7 +739,6 @@ class AppSidebar extends AppSidebarSessionNavigationElement implements SessionLi
                   </openclaw-tooltip>`
                 : nothing
             }
-            ${renderAppSidebarFooterBar(this)}
           </div>
         </div>
         ${this.sidebarMenus.renderCustomizeMenu()} ${this.sidebarMenus.renderMoreMenu()}

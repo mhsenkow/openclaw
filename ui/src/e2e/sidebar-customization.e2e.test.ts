@@ -556,21 +556,16 @@ suite.define(() => {
         .toEqual(["Agents", "Dashboards", "Systems", "Automations", "Plugins"]);
 
       // The sidebar header search button is the command palette entry point.
-      const searchButton = page.locator(".sidebar-brand__search");
+      const searchButton = page.locator(".sidebar-rail__button[aria-label='Open command palette']");
       await searchButton.click();
       const paletteInput = page.locator("#cmd-palette-input");
       await expect.poll(() => paletteInput.isVisible()).toBe(true);
       await page.keyboard.press("Escape");
       await expect.poll(() => paletteInput.isVisible()).toBe(false);
 
-      // The sidebar header toggle collapses the rail; collapsed shell chrome
-      // then provides the matching expand control.
-      const collapseButton = page.locator(".sidebar-brand__collapse");
-      await expect
-        .poll(() =>
-          collapseButton.evaluate((element) => Boolean(element.closest(".sidebar-brand__actions"))),
-        )
-        .toBe(true);
+      // The rail toggle collapses the list column; the icon rail stays mounted.
+      const collapseButton = page.locator(".sidebar-rail__nav-toggle");
+      await expect.poll(() => collapseButton.isVisible()).toBe(true);
       await collapseButton.click();
       await expect
         .poll(() => page.locator(".shell").getAttribute("class"))
@@ -579,16 +574,19 @@ suite.define(() => {
         .poll(() =>
           page
             .locator(".shell")
-            .evaluate((element) => getComputedStyle(element).getPropertyValue("--shell-nav-width")),
+            .evaluate((element) =>
+              getComputedStyle(element).getPropertyValue("--shell-nav-width").trim(),
+            ),
         )
-        .toBe("0px");
+        .toBe("44px");
       await expect.poll(() => sidebarResizer.count()).toBe(0);
-      await expect.poll(() => sidebar.isVisible()).toBe(false);
-      const navExpand = page.locator(".shell-chrome-controls__nav-toggle");
-      await expect.poll(() => navExpand.isVisible()).toBe(true);
+      await expect.poll(() => page.locator(".sidebar-rail").isVisible()).toBe(true);
+      await expect.poll(() => page.locator(".sidebar--list-collapsed").count()).toBe(1);
+      const navExpand = page.locator(".sidebar-rail__nav-toggle");
+      await expect.poll(() => navExpand.getAttribute("aria-label")).toBe("Expand sidebar");
       await page.reload();
       // Sidebar visibility is tab-local and intentionally not persisted; width is.
-      await expect.poll(() => page.locator(".sidebar-brand__collapse").isVisible()).toBe(true);
+      await expect.poll(() => page.locator(".sidebar-rail__nav-toggle").isVisible()).toBe(true);
       await expect
         .poll(() => page.locator(".shell").getAttribute("class"))
         .not.toContain("shell--nav-collapsed");
@@ -629,7 +627,7 @@ suite.define(() => {
       // Widening with the drawer open must not leave its stale state blocking
       // the desktop collapse control.
       await page.setViewportSize({ height: 900, width: 1440 });
-      await page.locator(".sidebar-brand__collapse").click();
+      await page.locator(".sidebar-rail__nav-toggle").click();
       await expect
         .poll(() => page.locator(".shell").getAttribute("class"))
         .toContain("shell--nav-collapsed");
@@ -867,7 +865,7 @@ suite.define(() => {
             }),
         );
         const floatingKinds = await page
-          .locator(".sidebar-attention--floating [data-attention-kind]")
+          .locator(".sidebar-rail openclaw-sidebar-attention [data-attention-kind]")
           .evaluateAll((elements) =>
             elements.map((element) => element.getAttribute("data-attention-kind")),
           );

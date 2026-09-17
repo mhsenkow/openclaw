@@ -908,7 +908,7 @@ suite.define(() => {
           await expect.poll(() => new URL(page.url()).pathname).toBe("/new");
           await page.locator(".new-session-page__message").waitFor({ state: "visible" });
         } else {
-          await page.locator(".sidebar-attention--floating .sidebar-issues-button").click();
+          await page.locator(".sidebar-rail .sidebar-issues-button").click();
           await page.locator("#sidebar-issues-panel").waitFor({ state: "visible" });
         }
         expect(await error.count()).toBe(0);

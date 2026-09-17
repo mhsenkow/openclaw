@@ -178,10 +178,10 @@ suite.define(() => {
           .some((entry) => entry.name.includes("nav-drawer-swipe")),
       ),
     ).toBe(false);
-    const collapse = page.locator(".sidebar-brand__collapse");
+    const collapse = page.locator(".sidebar-rail__nav-toggle");
     await expect.poll(() => collapse.isVisible()).toBe(true);
     await collapse.click();
-    const expand = page.locator(".shell-chrome-controls__nav-toggle");
+    const expand = page.locator(".sidebar-rail__nav-toggle");
     await expect.poll(() => expand.getAttribute("aria-label")).toBe("Expand sidebar");
     await expand.click();
     await expect.poll(() => collapse.isVisible()).toBe(true);
@@ -323,7 +323,7 @@ suite.define(() => {
 
   it("keeps restored sidebar focus from opening its tooltip", async () => {
     const page = await openPage({ hasTouch: true, nativeNav: false });
-    const toggle = page.locator(".sidebar-brand__collapse");
+    const toggle = page.locator(".sidebar-rail__nav-toggle");
     await expect.poll(() => toggle.getAttribute("aria-label")).toBe("Collapse sidebar");
 
     // Safari does not focus buttons on tap. Reproduce that ordering so the
@@ -335,7 +335,7 @@ suite.define(() => {
       (element as HTMLElement).click();
     });
 
-    const expand = page.locator(".shell-chrome-controls__nav-toggle");
+    const expand = page.locator(".sidebar-rail__nav-toggle");
     const tooltip = expand.locator("xpath=..");
     await expect.poll(() => expand.getAttribute("aria-label")).toBe("Expand sidebar");
     await expect
@@ -396,8 +396,12 @@ suite.define(() => {
 
     // Expanded native-nav hosts keep sidebar search (no native search control
     // exists while the rail is open) but hide the duplicate web nav toggle.
-    await expect.poll(() => page.locator(".sidebar-brand__search").isVisible()).toBe(true);
-    await expect.poll(() => page.locator(".sidebar-brand__collapse").isVisible()).toBe(false);
+    await expect
+      .poll(() =>
+        page.locator(".sidebar-rail__button[aria-label='Open command palette']").isVisible(),
+      )
+      .toBe(true);
+    await expect.poll(() => page.locator(".sidebar-rail__nav-toggle").isVisible()).toBe(false);
 
     // Collapse through the native titlebar path; the whole web chrome cluster
     // hides (native titlebar provides search and new-thread while collapsed).
@@ -503,38 +507,10 @@ suite.define(() => {
       .poll(() => page.locator(".shell").getAttribute("class"))
       .toContain("shell--nav-collapsed");
     await expect.poll(() => newThread.isVisible()).toBe(true);
-    await page.locator(".sidebar-attention--floating .sidebar-issues-button").waitFor();
-    const toolbarBox = await toolbar.boundingBox();
-    const attention = page.locator(".sidebar-attention--floating");
-    const attentionBox = await attention.boundingBox();
-    expect(toolbarBox).not.toBeNull();
-    expect(attentionBox).not.toBeNull();
-    expect(attentionBox!.x - (toolbarBox!.x + toolbarBox!.width)).toBeGreaterThanOrEqual(4);
-    const titleBox = await page
-      .locator(".chat-pane-cache__pane--visible .chat-pane__crumbs:visible")
-      .first()
-      .boundingBox();
-    const attentionRight = await attention.evaluate((element) =>
-      Math.max(
-        ...[element, ...element.querySelectorAll("*")].map(
-          (candidate) => candidate.getBoundingClientRect().right,
-        ),
-      ),
-    );
-    expect(titleBox).not.toBeNull();
-    expect(titleBox!.x - attentionRight).toBeGreaterThanOrEqual(8);
-    const topLeftControls = page.locator(
-      ".macos-titlebar-controls button:visible, .sidebar-attention--floating button:visible",
-    );
-    const centerlines = await topLeftControls.evaluateAll((buttons) =>
-      buttons.map((button) => {
-        const box = button.getBoundingClientRect();
-        return box.top + box.height / 2;
-      }),
-    );
-    for (const centerline of centerlines.slice(1)) {
-      expect(centerline).toBeCloseTo(centerlines[0]!, 1);
-    }
+    await page.locator(".sidebar-rail .sidebar-issues-button").waitFor();
+    const attention = page.locator(".sidebar-rail openclaw-sidebar-attention");
+    await expect.poll(() => attention.isVisible()).toBe(true);
+    await expect.poll(() => page.locator(".sidebar--list-collapsed").count()).toBe(1);
     if (railProofDir) {
       await page.screenshot({
         animations: "disabled",
@@ -614,7 +590,7 @@ suite.define(() => {
     await focusChatSidePanel(page);
 
     const shellControls = page.locator(
-      ".macos-titlebar-controls button:visible, .sidebar-attention--floating button:visible",
+      ".macos-titlebar-controls button:visible, .sidebar-rail openclaw-sidebar-attention button:visible",
     );
     const panelControls = page.locator(".chat-pane__actions button:visible");
     const shellBoxes = await Promise.all(
@@ -642,7 +618,7 @@ suite.define(() => {
       }
     }
     if (testCase.deviceLess) {
-      await page.locator(".sidebar-attention--floating .sidebar-issues-button__count").waitFor();
+      await page.locator(".sidebar-rail .sidebar-issues-button__count").waitFor();
       expect(await page.locator(".scope-upgrade-shell-status").count()).toBe(0);
     }
     for (let index = 0; index < (await panelControls.count()); index += 1) {

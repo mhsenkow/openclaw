@@ -25,6 +25,7 @@ import {
   storeSidebarSessionsShowCron,
   storeSidebarSessionsShowPreview,
   storeSidebarSessionsShowSystem,
+  toggleSidebarSessionSection,
   type SidebarRecentSession,
   type SidebarSectionDropTarget,
   type SidebarSessionMutationResult,
@@ -566,13 +567,13 @@ export class SessionOrganizerController {
   }
 
   toggleSection(sectionId: string) {
-    const collapsed = new Set(this.collapsedSessionSections);
-    if (collapsed.has(sectionId)) {
-      collapsed.delete(sectionId);
-    } else {
-      collapsed.add(sectionId);
-    }
-    this.saveCollapsedSessionSections(collapsed);
+    this.saveCollapsedSessionSections(
+      toggleSidebarSessionSection(
+        this.collapsedSessionSections,
+        sectionId,
+        this.host.sessionData.sessionCatalogs.map((catalog) => catalog.id),
+      ),
+    );
   }
 
   private async reorderSidebarSection(

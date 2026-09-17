@@ -45,6 +45,7 @@ const offeredSlotLabels = [
   "Browser",
   "Files",
   "Side chat",
+  "Agent",
   "Tasks",
   "Desktop",
   "Discussion",
@@ -243,11 +244,20 @@ async function openColdSidebar(page: Page, scenario = coldOpenScenario()) {
   await gateway.waitForRequest("session.discussion.info");
   await gateway.waitForRequest("sessions.companion.state");
   expect(await gateway.getRequests("sessions.files.list")).toHaveLength(0);
-  await page.getByRole("button", { name: "Side panel", exact: true }).first().click();
-  const choices = page.locator(".side-panel-empty__type");
-  await choices.first().waitFor();
+  // First-run layout seeds Agent open; close that tab, then ensure the panel
+  // is open so the empty type picker is visible.
+  const closeAgent = page.getByRole("button", { name: "Close Agent", exact: true });
+  if (await closeAgent.isVisible()) {
+    await closeAgent.click();
+  }
+  const emptyTypes = page.locator(".side-panel-empty__type");
+  const openSidePanel = page.getByRole("button", { name: "Side panel", exact: true }).first();
+  if (await openSidePanel.isVisible()) {
+    await openSidePanel.click();
+  }
+  await emptyTypes.first().waitFor({ state: "visible" });
   expect(await gateway.getRequests("sessions.files.list")).toHaveLength(0);
-  return choices;
+  return emptyTypes;
 }
 
 async function seedHiddenBoardSlot(page: Page) {

@@ -367,6 +367,7 @@ export function renderAppSidebarOnline(host: AppSidebarRenderHost) {
     <section class="sidebar-online" aria-label=${label} data-session-section=${sectionId}>
       ${renderSidebarSessionSectionHeader({
         sectionId,
+        kind: "people",
         draggable: false,
         onStartDrag: () => undefined,
         onFinishDrag: () => undefined,
@@ -620,10 +621,40 @@ function renderAppSidebarPluginTab(host: AppSidebarRenderHost, tab: GatewayContr
       });
 }
 
-function renderAppSidebarAttention(host: AppSidebarRenderHost) {
+export function renderAppSidebarAttention(host: AppSidebarRenderHost) {
   return html`<openclaw-sidebar-attention
     .activeRouteId=${host.activeRouteId}
     .onNavigate=${(routeId: NavigationRouteId) => host.onNavigate?.(routeId)}
     .watchUpdateProgress=${host.watchUpdateProgress}
   ></openclaw-sidebar-attention>`;
+}
+
+/** Compact identity control for the muse-style icon rail. */
+export function renderAppSidebarRailIdentity(host: AppSidebarRenderHost) {
+  const selfUser = resolveCurrentSelfUser({
+    snapshotUser: host.sessionDataContext?.gateway.snapshot.selfUser,
+    presenceEntries: readPresenceEntries(host.sessionData.presencePayload),
+    presenceInstanceId: host.sessionData.presenceInstanceId,
+  });
+  const selfLabel = selfUser?.name ?? selfUser?.email ?? t("nav.owner");
+  const avatarUser = {
+    id: "owner",
+    ...selfUser,
+    name: selfLabel,
+    watchedSessions: [],
+  };
+  const identityMenuLabel = t("profilePage.identity.menuButtonLabel", { name: selfLabel });
+  return html`
+    <button
+      type="button"
+      class="sidebar-rail__identity"
+      aria-haspopup="menu"
+      aria-expanded=${String(host.sidebarMenus.identityMenuPosition !== null)}
+      aria-label=${identityMenuLabel}
+      @click=${(event: MouseEvent) =>
+        host.sidebarMenus.toggleIdentityMenu(event.currentTarget as HTMLElement)}
+    >
+      <openclaw-viewer-avatar .user=${avatarUser} variant="footer"></openclaw-viewer-avatar>
+    </button>
+  `;
 }

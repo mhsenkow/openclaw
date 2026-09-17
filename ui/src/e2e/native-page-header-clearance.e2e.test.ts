@@ -135,7 +135,7 @@ suite.define(() => {
     await page.evaluate(() => {
       document.documentElement.dir = "rtl";
     });
-    await page.locator(".sidebar-brand__collapse").click();
+    await page.locator(".sidebar-rail__nav-toggle").click();
     await expect
       .poll(() => page.locator(".shell").getAttribute("class"))
       .toContain("shell--nav-collapsed");
@@ -174,7 +174,7 @@ suite.define(() => {
         }
       });
     });
-    await page.locator(".sidebar-brand__collapse").click();
+    await page.locator(".sidebar-rail__nav-toggle").click();
     await expect
       .poll(() => page.locator(".shell").getAttribute("class"))
       .toContain("shell--nav-collapsed");

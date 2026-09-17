@@ -223,6 +223,8 @@ export abstract class ChatPaneLayoutRender extends ChatPaneBrowserAnnotationRend
       onCompanionDraftChange: (draft) =>
         this.sessionCompanionThreads.setDraft(state.sessionKey, draft, currentAgentId),
       onCompanionVisibilityChange: this.setSessionObserverVisibility,
+      agentPresented:
+        this.presented && this.visuallyPresented && isSidebarSlotVisible(sidebarLayout, "agent"),
       connected: state.connected,
       pendingQuestion: companionThread.pendingQuestion,
       onClearCompanion: () => void this.clearSessionCompanion(),

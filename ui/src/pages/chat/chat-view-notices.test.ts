@@ -81,3 +81,28 @@ it("offers an explicit discard action with the full warning when unsaved starts 
   expect(discardAndReload).toHaveBeenCalledOnce();
   expect(retry).not.toHaveBeenCalled();
 });
+
+it("renders a review strip that opens approvals when work is waiting", () => {
+  const onOpenApprovals = vi.fn();
+  const container = document.body.appendChild(document.createElement("div"));
+
+  render(
+    renderChatComposerNotices({
+      messages: [],
+      pendingApprovalCount: 2,
+      onOpenApprovals,
+    }),
+    container,
+  );
+
+  const strip = container.querySelector(".chat-review-strip");
+  expect(strip?.getAttribute("role")).toBe("status");
+  expect(strip?.textContent).toContain(t("chat.composer.reviewStrip.title"));
+  const review = container.querySelector<HTMLButtonElement>(".chat-review-strip__action");
+  expect(review?.textContent?.trim()).toBe(t("chat.composer.reviewStrip.review"));
+  review?.click();
+  expect(onOpenApprovals).toHaveBeenCalledOnce();
+
+  render(renderChatComposerNotices({ messages: [], pendingApprovalCount: 0 }), container);
+  expect(container.querySelector(".chat-review-strip")).toBeNull();
+});

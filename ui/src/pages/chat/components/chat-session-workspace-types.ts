@@ -32,6 +32,8 @@ export type SessionWorkspaceProps = {
   onToggleBrowser?: () => void;
   onToggleDesktop?: () => void;
   onToggleCustodian?: () => void;
+  onToggleAgent?: () => void;
+  agentPanelOpen?: boolean;
   /** Opens the session diff panel; absent until a usable checkout is known. */
   onOpenDiff?: () => void;
 };

@@ -2,9 +2,17 @@ import { html, nothing, type TemplateResult } from "lit";
 import { startHoverMarqueeFromEvent, stopHoverMarqueeFromEvent } from "../lib/hover-marquee.ts";
 import { writeSidebarSectionDragData } from "../lib/sessions/drag.ts";
 
+/**
+ * Which axis a section groups by. Three unrelated taxonomies share this header,
+ * so the kind is what lets the stylesheet keep them in separate visual
+ * registers instead of rendering people, topics, and harnesses identically.
+ */
+export type SidebarSectionKind = "people" | "taxonomy" | "catalog";
+
 export function renderSidebarSessionSectionHeader(params: {
   sectionId: string;
   content: TemplateResult;
+  kind?: SidebarSectionKind;
   draggable?: boolean;
   disabledReason?: string;
   onStartDrag: (sectionId: string) => void;
@@ -17,6 +25,7 @@ export function renderSidebarSessionSectionHeader(params: {
       class="sidebar-recent-sessions__head ${
         draggable ? "sidebar-recent-sessions__head--draggable" : ""
       }"
+      data-section-kind=${params.kind ?? "taxonomy"}
       draggable=${draggable ? "true" : "false"}
       title=${params.disabledReason ?? nothing}
       @mousedown=${(event: MouseEvent) => {

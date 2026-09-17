@@ -5,15 +5,10 @@ import { isRouteId, type RouteId } from "../app-routes.ts";
 import { icons } from "../components/icons.ts";
 import { renderLazyElementModal } from "../components/lazy-view-error.ts";
 import { renderConnectingSplash } from "../components/loading-skeleton.ts";
-import { renderNewSessionLink } from "../components/new-session-link.ts";
 import { renderLazySettingsSidebar } from "../components/settings-sidebar-lazy.ts";
 import type { ThemeModeChangeDetail } from "../components/theme-mode-toggle.ts";
 import { t } from "../i18n/index.ts";
 import { canCallGatewayMethod } from "../lib/gateway-methods.ts";
-import {
-  formatKeyboardShortcutCombo,
-  KEYBOARD_SHORTCUT_COMBOS,
-} from "../lib/keyboard-shortcut-contract.ts";
 import { readSessionMethodAccess } from "../lib/session-method-access.ts";
 import { normalizeAgentId, resolveUiSelectedSessionAgentId } from "../lib/sessions/session-key.ts";
 import { isTerminalAvailable } from "../lib/terminal-availability.ts";
@@ -68,7 +63,6 @@ import {
   normalizeCatalogOpenTarget,
   normalizeChatSendShortcut,
 } from "./settings.ts";
-import { renderCollapsedHomeToggle } from "./shell-assistant-toggles.ts";
 import { createUpdateProgressWatcher } from "./update-confirmation.ts";
 
 const EMPTY_SESSION_HAS_DRAFT = () => false;
@@ -280,6 +274,7 @@ export function renderApplicationShell(host: ShellViewHost) {
       preferencesBrowserOnly: gatewayConnected && context.runtimeConfig.canPatch === false,
       sidebarEntries: navigationSnapshot.sidebarEntries,
       navigationVisible: !navigationSurfaceHidden,
+      listCollapsed: navCollapsed,
       sidebarAgentsMode: uiSettings.sidebarAgentsMode ?? "chip",
       sidebarLiveActivity: uiSettings.sidebarLiveActivity !== false,
       pinnedAgentIds: navigationSnapshot.pinnedAgentIds,
@@ -460,49 +455,9 @@ export function renderApplicationShell(host: ShellViewHost) {
             ></openclaw-app-topbar>`
       }
       ${
-        !nativeEmbed && navCollapsed && !onboarding && !settingsTakeover && !mobileNavLayout
-          ? html`
-              <div class="shell-chrome-controls">
-                <openclaw-tooltip
-                  .content=${`${t("nav.expand")} (${formatKeyboardShortcutCombo(KEYBOARD_SHORTCUT_COMBOS.toggleSidebar)})`}
-                >
-                  <button
-                    type="button"
-                    class="shell-chrome-controls__button shell-chrome-controls__nav-toggle"
-                    aria-label=${t("nav.expand")}
-                    aria-expanded="false"
-                    data-env-avatar=${
-                      config.environment ? config.assistantIdentity.name.charAt(0) : nothing
-                    }
-                    @click=${() => host.toggleNavigationSurface()}
-                  >
-                    ${icons.panelLeftOpen}
-                  </button>
-                </openclaw-tooltip>
-                ${renderNewSessionLink({
-                  basePath: context.basePath,
-                  agentId: selectedAgentId,
-                  className: "shell-chrome-controls__button shell-chrome-controls__new-thread",
-                  label: t("chat.runControls.newSession"),
-                  disabledReason: newSessionAccess.allowed ? undefined : newSessionAccess.reason,
-                  onOpen: openNewSession,
-                })}
-                <openclaw-tooltip
-                  .content=${`${t("chat.openCommandPalette")} (${formatKeyboardShortcutCombo(KEYBOARD_SHORTCUT_COMBOS.commandPalette)})`}
-                >
-                  <button
-                    type="button"
-                    class="shell-chrome-controls__button shell-chrome-controls__search"
-                    aria-label=${t("chat.openCommandPalette")}
-                    @click=${() => host.openPalette()}
-                  >
-                    ${icons.search}
-                  </button>
-                </openclaw-tooltip>
-                ${homePanelAvailable ? renderCollapsedHomeToggle() : nothing}
-              </div>
-            `
-          : nothing
+        // The muse-style rail keeps Search/Inbox/identity mounted; collapse only
+        // hides the list column, so desktop floating chrome is no longer needed.
+        nothing
       }
       ${
         nativeEmbed

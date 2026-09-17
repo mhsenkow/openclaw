@@ -166,9 +166,9 @@ suite.define(() => {
       await gateway.waitForRequest("chat.startup");
 
       const composer = page.locator(".agent-chat__input");
-      const model = composer.locator('[data-chat-model-select="true"]');
+      const options = composer.locator(".chat-composer-options__trigger");
       const voice = page.getByRole("button", { name: "Start voice input" });
-      await expect.poll(() => model.getAttribute("aria-busy")).toBe("true");
+      await expect.poll(() => options.isVisible()).toBe(true);
       await expect.poll(() => voice.isVisible()).toBe(true);
       if (artifactDir) {
         await composer.screenshot({
@@ -178,8 +178,11 @@ suite.define(() => {
       }
 
       const measureGap = async () => {
-        const [modelBox, voiceBox] = await Promise.all([model.boundingBox(), voice.boundingBox()]);
-        return modelBox && voiceBox ? voiceBox.x - (modelBox.x + modelBox.width) : null;
+        const [optionsBox, voiceBox] = await Promise.all([
+          options.boundingBox(),
+          voice.boundingBox(),
+        ]);
+        return optionsBox && voiceBox ? voiceBox.x - (optionsBox.x + optionsBox.width) : null;
       };
       await expect.poll(measureGap).toBeGreaterThanOrEqual(0);
       await expect.poll(measureGap).toBeLessThanOrEqual(16);
@@ -394,6 +397,16 @@ suite.define(() => {
       const contextUsage = composer.locator(".context-ring");
       const permission = composer.locator('[data-chat-permission-select="true"]');
       const permissionIcon = permission.locator(".chat-controls__permission-icon svg");
+      const options = composer.locator(".chat-composer-options");
+      const optionsTrigger = options.locator("summary.chat-composer-options__trigger");
+      const openComposerOptions = async () => {
+        if (!(await options.evaluate((node) => (node as HTMLDetailsElement).open))) {
+          await optionsTrigger.click();
+        }
+        await expect
+          .poll(() => options.evaluate((node) => (node as HTMLDetailsElement).open))
+          .toBe(true);
+      };
       const textarea = composer.locator("textarea");
       const attach = composer.locator(
         'button.agent-chat__input-btn--attach[aria-label="Add attachment"]',
@@ -432,6 +445,8 @@ suite.define(() => {
         return Math.max(Math.abs(x), Math.abs(y));
       };
 
+      await expect.poll(() => options.isVisible()).toBe(true);
+      await openComposerOptions();
       await expect.poll(() => model.isVisible()).toBe(true);
       expect(await gateway.getRequests("chat.metadata")).toHaveLength(0);
       await gateway.waitForRequest("models.list");
@@ -531,7 +546,9 @@ suite.define(() => {
       await textarea.click();
       await expect.poll(pickerWidth).toBe(0);
       await expect
-        .poll(() => model.evaluate((node) => node.closest(".agent-chat__composer-footer") != null))
+        .poll(() =>
+          options.evaluate((node) => node.closest(".agent-chat__composer-footer") != null),
+        )
         .toBe(true);
       await expect
         .poll(() => settings.evaluate((node) => node.closest(".chat-pane__header") != null))

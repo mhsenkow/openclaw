@@ -266,7 +266,7 @@ suite.define(() => {
     );
 
     await closeInbox(page);
-    await page.locator(".sidebar-brand__collapse").click();
+    await page.locator(".sidebar-rail__nav-toggle").click();
     const collapsedItem = await openLimitedAccessItem(await openInbox(page));
     await waitForPendingUpgradeItem(collapsedItem);
     expect(await gateway.getRequests("device.scopes.requestUpgrade")).toHaveLength(1);
@@ -446,10 +446,10 @@ suite.define(() => {
       await page.getByText("Update the Gateway to continue setup with OpenClaw.").count(),
     ).toBe(0);
     const onboardingInbox = page.locator(
-      ".custodian__header-actions > openclaw-sidebar-attention:not(.sidebar-attention--floating)",
+      ".custodian__header-actions > openclaw-sidebar-attention:not(.sidebar-rail openclaw-sidebar-attention)",
     );
     await onboardingInbox.locator(".sidebar-issues-button").waitFor();
-    expect(await page.locator(".sidebar-attention--floating").count()).toBe(0);
+    expect(await page.locator(".sidebar-rail openclaw-sidebar-attention").count()).toBe(0);
     const item = await openLimitedAccessItem(await openInbox(page));
     await item.getByRole("button", { name: "Request admin" }).waitFor();
     await captureProof(

@@ -33,6 +33,8 @@ type ChatComposerNoticesProps = ChatPlacementStartupNoticeProps & {
   runError?: { summary: string } | null;
   onDismissWorkspaceConflict?: () => void;
   workspaceConflict?: WorkspaceResultConflict | null;
+  pendingApprovalCount?: number;
+  onOpenApprovals?: () => void;
 };
 
 function renderDiskSpaceNotice(diskSpace: SessionPlacementDiskSpace | undefined) {
@@ -151,7 +153,32 @@ export function renderChatTopbarNotices(props: ChatViewNoticesProps) {
 }
 
 export function renderChatComposerNotices(props: ChatComposerNoticesProps) {
+  const pendingApprovals = props.pendingApprovalCount ?? 0;
   return html`
+    ${
+      pendingApprovals > 0 && props.onOpenApprovals
+        ? html`
+            <div
+              class="chat-composer-neighbor-card chat-composer-neighbor-card--info chat-review-strip"
+              role="status"
+            >
+              <span class="chat-composer-neighbor-card__icon" aria-hidden="true"
+                >${icons.shieldQuestion}</span
+              >
+              <div class="chat-composer-neighbor-card__copy">
+                <strong>${t("chat.composer.reviewStrip.title")}</strong>
+                <button
+                  type="button"
+                  class="chat-review-strip__action"
+                  @click=${props.onOpenApprovals}
+                >
+                  ${t("chat.composer.reviewStrip.review")}
+                </button>
+              </div>
+            </div>
+          `
+        : nothing
+    }
     ${renderProviderPolicyNotice(props.providerPolicyNotice)}
     ${props.runError ? renderErrorNotice(props.runError.summary) : nothing}
     ${renderWorkspaceConflictNotice({

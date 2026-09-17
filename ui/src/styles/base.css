@@ -246,6 +246,21 @@
   --chat-text-size: var(--control-ui-text-md);
   --chat-block-gap: var(--chat-text-size);
 
+  /* Sidebar type scale. The rail carries four roles and no more: meta for
+     counts and status detail, label for the uppercase section eyebrows, row for
+     session/person/menu rows, and title for agent identity. Defined at :root so
+     portaled sidebar menus inherit the same steps as the rail itself. */
+  --sidebar-text-meta: calc(10px * var(--control-ui-text-scale));
+  --sidebar-text-label: calc(11px * var(--control-ui-text-scale));
+  --sidebar-text-row: calc(13px * var(--control-ui-text-scale));
+  --sidebar-text-title: calc(14px * var(--control-ui-text-scale));
+  /* Three weights span the rail: rows sit at row, the current row and proper
+     names at emphasis, uppercase eyebrows at label. */
+  --sidebar-weight-row: 450;
+  --sidebar-weight-emphasis: 550;
+  --sidebar-weight-label: 650;
+  --sidebar-tracking-label: 0.08em;
+
   /* Shadows - Subtle, layered depth */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);

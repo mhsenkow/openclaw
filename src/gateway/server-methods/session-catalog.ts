@@ -295,6 +295,33 @@ function registrationOrRespond(catalogId: string, respond: RespondFn) {
   return registration;
 }
 
+type CatalogHost = SessionCatalog["hosts"][number];
+
+/**
+ * A node that shares the Gateway's filesystem (the macOS app next to a local
+ * Gateway) reports the same session files under its own host. Identity-based
+ * `gatewayLocal` cannot see that because the app keeps a separate device
+ * identity, so list each thread once, under the Gateway host that already owns
+ * continue/terminal actions for it. Hosts left with no sessions stay in the
+ * response; the UI hides empty hosts.
+ */
+function omitNodeSessionsListedByGateway(
+  host: CatalogHost,
+  gatewayHosts: readonly CatalogHost[],
+): CatalogHost {
+  if (host.kind !== "node" || host.sessions.length === 0) {
+    return host;
+  }
+  const listed = new Set(
+    gatewayHosts.flatMap((gatewayHost) => gatewayHost.sessions.map(({ threadId }) => threadId)),
+  );
+  if (listed.size === 0) {
+    return host;
+  }
+  const sessions = host.sessions.filter((session) => !listed.has(session.threadId));
+  return sessions.length === host.sessions.length ? host : { ...host, sessions };
+}
+
 function catalogResult(
   provider: SessionCatalogProvider,
   shareRoute: SessionCatalogShareRoute | undefined,
@@ -503,7 +530,14 @@ export const sessionCatalogHandlers: GatewayRequestHandlers = {
                 ...(provider.startTerminalSession ? { startTerminal: true as const } : {}),
               }
             : undefined;
-          const onHost = (host: SessionCatalog["hosts"][number]) => {
+          // Gateway hosts published so far; a node frame arriving first is corrected by the
+          // final response, which dedupes against the complete host list.
+          const publishedGatewayHosts: CatalogHost[] = [];
+          const onHost = (rawHost: CatalogHost) => {
+            const host = omitNodeSessionsListedByGateway(rawHost, publishedGatewayHosts);
+            if (host.kind === "gateway") {
+              publishedGatewayHosts.push(host);
+            }
             requestEntries?.captureHostInstances(host, instances);
             const catalog = catalogResult(provider, shareRoute, [host], undefined, createSession);
             // Progressive frames are an optimization. The final RPC response remains
@@ -511,7 +545,7 @@ export const sessionCatalogHandlers: GatewayRequestHandlers = {
             progress.publish(catalog, instances);
           };
           try {
-            const hosts = await progress.runProvider(onHost, (lifetime) => {
+            const rawHosts = await progress.runProvider(onHost, (lifetime) => {
               const providerParams = {
                 agentId: resolvedAgent.agentId,
                 allowProcessHomeFallback: allowHomeFallback,
@@ -525,6 +559,10 @@ export const sessionCatalogHandlers: GatewayRequestHandlers = {
               };
               return listSessionCatalogProvider(provider, providerParams, progress.assertCurrent);
             });
+            const gatewayHosts = rawHosts.filter((host) => host.kind === "gateway");
+            const hosts = rawHosts.map((host) =>
+              omitNodeSessionsListedByGateway(host, gatewayHosts),
+            );
             for (const host of hosts) {
               requestEntries?.captureHostInstances(host, instances);
             }

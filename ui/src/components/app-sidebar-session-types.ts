@@ -391,13 +391,57 @@ export function loadStoredSidebarSessionSortMode(): SidebarSessionSortMode {
   return stored === "updated" || stored === "people" ? stored : "created";
 }
 
+/**
+ * Collapsed-set entry standing for every `catalog:<id>` section. Native CLI
+ * catalogs (Claude Code, Codex, ...) can hold hundreds of threads, so they start
+ * folded behind their count and open on demand; ids are plugin-defined and only
+ * known once the Gateway lists them, hence a wildcard rather than an id list.
+ */
+export const SIDEBAR_ALL_CATALOGS_COLLAPSED_SECTION_ID = "catalog:*";
+const SIDEBAR_FIRST_RUN_COLLAPSED_SECTIONS = ["work", SIDEBAR_ALL_CATALOGS_COLLAPSED_SECTION_ID];
+
+export function isSidebarSessionSectionCollapsed(
+  collapsed: ReadonlySet<string>,
+  sectionId: string,
+): boolean {
+  return (
+    collapsed.has(sectionId) ||
+    (sectionId.startsWith("catalog:") && collapsed.has(SIDEBAR_ALL_CATALOGS_COLLAPSED_SECTION_ID))
+  );
+}
+
+/**
+ * Toggle one section. Toggling a catalog while the wildcard is active pins the
+ * other known catalogs closed explicitly, so the touched one can open without
+ * silently expanding the rest.
+ */
+export function toggleSidebarSessionSection(
+  collapsed: ReadonlySet<string>,
+  sectionId: string,
+  knownCatalogIds: readonly string[],
+): Set<string> {
+  const next = new Set(collapsed);
+  if (isSidebarSessionSectionCollapsed(next, sectionId)) {
+    if (next.has(SIDEBAR_ALL_CATALOGS_COLLAPSED_SECTION_ID) && sectionId.startsWith("catalog:")) {
+      next.delete(SIDEBAR_ALL_CATALOGS_COLLAPSED_SECTION_ID);
+      for (const catalogId of knownCatalogIds) {
+        next.add(`catalog:${catalogId}`);
+      }
+    }
+    next.delete(sectionId);
+  } else {
+    next.add(sectionId);
+  }
+  return next;
+}
+
 export function loadStoredCollapsedSessionSections(): ReadonlySet<string> {
   try {
     const raw = getSafeLocalStorage()?.getItem(SIDEBAR_SESSION_COLLAPSED_SECTIONS_STORAGE_KEY);
     if (raw == null) {
-      // First run: Coding stays muted while Online preserves its expanded
-      // default until the user explicitly collapses it.
-      return new Set(["work"]);
+      // First run: Coding and the CLI catalogs stay folded while Online preserves
+      // its expanded default until the user explicitly collapses it.
+      return new Set(SIDEBAR_FIRST_RUN_COLLAPSED_SECTIONS);
     }
     const parsed: unknown = JSON.parse(raw);
     return new Set(
@@ -406,7 +450,7 @@ export function loadStoredCollapsedSessionSections(): ReadonlySet<string> {
         : [],
     );
   } catch {
-    return new Set(["work"]);
+    return new Set(SIDEBAR_FIRST_RUN_COLLAPSED_SECTIONS);
   }
 }
 

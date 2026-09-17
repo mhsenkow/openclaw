@@ -1,6 +1,7 @@
 import type { ProgressCard } from "@openclaw/gateway-protocol";
 import { html, nothing } from "lit";
 import { findInlineApproval } from "../../app/approval-presentation.ts";
+import { SHELL_APPROVALS_OPEN_EVENT } from "../../app/lazy-shell-action.ts";
 import { hasOperatorAdminAccess, hasOperatorWriteAccess } from "../../app/operator-access.ts";
 import { patchSettings } from "../../app/settings.ts";
 import { readPresenceEntries, resolveCurrentSelfUser } from "../../app/user-profile.ts";
@@ -488,6 +489,8 @@ export class ChatPane extends ChatPaneLayoutRender {
       approvalBusy: overlays?.snapshot?.approvalBusy,
       approvalCanGrant: overlays?.snapshot?.approvalCanGrant ?? false,
       approvalErrors: overlays?.snapshot?.approvalErrors,
+      pendingApprovalCount: overlays?.snapshot?.approvalQueue?.length ?? 0,
+      onOpenApprovals: () => void window.dispatchEvent(new CustomEvent(SHELL_APPROVALS_OPEN_EVENT)),
       onApprovalDecision:
         overlays && !sessionParticipationBlocked
           ? (approvalId, decision) =>
@@ -530,7 +533,8 @@ export class ChatPane extends ChatPaneLayoutRender {
         modelAuthStatusResult: state.modelAuthStatusResult,
       },
       composerControls: composerControls?.composerControls ?? nothing,
-      permissionPicker: composerControls?.permissionPicker,
+      // Permission is hosted inside composer options; keep the lead attach-only.
+      permissionPicker: undefined,
       backgroundTasks: catalogKey ? undefined : backgroundTasks,
       ...this.suggestionChatProps(state.connected, selectedSessionArchived, multiIdentity),
       pullRequests: this.visibleSessionPullRequests,

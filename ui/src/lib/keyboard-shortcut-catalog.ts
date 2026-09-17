@@ -52,6 +52,7 @@ const KEYBOARD_SHORTCUT_SECTIONS = [
     keyboardShortcutEntry("homePanel", KEYBOARD_SHORTCUT_COMBOS.homePanel),
     keyboardShortcutEntry("workspaceFiles", KEYBOARD_SHORTCUT_COMBOS.workspaceFiles),
     keyboardShortcutEntry("sideChat", KEYBOARD_SHORTCUT_COMBOS.sideChat),
+    keyboardShortcutEntry("agentPanel", KEYBOARD_SHORTCUT_COMBOS.agentPanel),
     keyboardShortcutEntry("browserPanel", KEYBOARD_SHORTCUT_COMBOS.browserPanel),
     keyboardShortcutEntry("tasksPanel", KEYBOARD_SHORTCUT_COMBOS.tasksPanel),
     keyboardShortcutEntry("desktopPanel", KEYBOARD_SHORTCUT_COMBOS.desktopPanel),

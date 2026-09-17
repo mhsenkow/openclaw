@@ -293,6 +293,10 @@ export function resolveLoginFailureFeedback(
         ? "login.failure.authRequired.passwordTitle"
         : "login.failure.authRequired.title",
       summaryKey: "login.failure.authRequired.summary",
+      // The dashboard handoff carries a device-bound bootstrap rather than the
+      // shared secret, so it is the only step that still works when the
+      // configured credential is SecretRef-managed and cannot be printed.
+      primaryCommand: "openclaw dashboard",
       stepKeys: expectsPassword
         ? ["login.failure.authRequired.stepPassword", "login.failure.authRequired.stepConnect"]
         : [
@@ -326,6 +330,7 @@ export function resolveLoginFailureFeedback(
         classifyGatewaySecret(params.secret ?? "") === "setup-code"
           ? "login.setupCodeHint"
           : "login.failure.authFailed.summary",
+      primaryCommand: "openclaw dashboard",
       stepKeys: expectsPassword
         ? ["login.failure.authRequired.stepPassword", "login.failure.authRequired.stepConnect"]
         : [

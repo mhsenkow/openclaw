@@ -131,7 +131,7 @@ suite.define(() => {
       );
       await page.goto(sessionUrl.href);
       const sidebar = page.locator("openclaw-app-sidebar");
-      const expandButton = page.locator(".shell-chrome-controls__nav-toggle");
+      const expandButton = page.locator(".sidebar-rail__nav-toggle");
       const composer = page.getByPlaceholder("Message OpenClaw");
       await expandButton.waitFor({ state: "visible", timeout: 10_000 });
       // Wait for the conversation itself, not just the missing sidebar: the

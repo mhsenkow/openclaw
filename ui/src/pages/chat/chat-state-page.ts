@@ -63,6 +63,7 @@ import {
   SIDEBAR_NARROW_BREAKPOINT_PX,
   activatePanel,
   closeSlot,
+  createDefaultAgentSidebarLayout,
   fitSidebarLayout,
   normalizeSidebarLayout,
   openSlot,
@@ -262,7 +263,12 @@ export function createPageState(
     chatUserNearBottom: true,
     chatFollowLocked: false,
     chatReadingHistory: false,
-    sidebarLayout: normalizeSidebarLayout(settings.sidebarSessionLayouts?.[sidebarSessionKey]),
+    sidebarLayout: (() => {
+      const saved = settings.sidebarSessionLayouts?.[sidebarSessionKey];
+      return saved !== undefined
+        ? normalizeSidebarLayout(saved)
+        : createDefaultAgentSidebarLayout();
+    })(),
     sidebarContent: null,
     sidebarFocusPanelId: settings.sidebarSessionActivePanels?.[sidebarSessionKey] ?? "",
     sidebarFocusVersion: 0,

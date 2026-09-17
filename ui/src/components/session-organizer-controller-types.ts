@@ -18,6 +18,7 @@ export interface SessionOrganizerControllerHost extends ReactiveControllerHost {
     | "publishSessionMutationError"
     | "refreshSidebarSessions"
     | "resetSessionList"
+    | "sessionCatalogs"
     | "sessionMutationError"
   >;
   readonly onUpdateSidebarEntries?: (entries: string[]) => void;

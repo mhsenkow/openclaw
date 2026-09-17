@@ -889,7 +889,7 @@ suite.define(() => {
         await gateway.waitForRequest("connect", { after: connected });
         for (const collapsed of [false, true]) {
           if (collapsed) {
-            await page.locator(".sidebar-brand__collapse").click();
+            await page.locator(".sidebar-rail__nav-toggle").click();
           }
           const chrome = page.locator(
             collapsed ? ".shell-chrome-controls" : ".sidebar-brand__actions",
@@ -908,7 +908,7 @@ suite.define(() => {
             })
             .toBeGreaterThanOrEqual(0);
         }
-        await page.locator(".shell-chrome-controls__nav-toggle").click();
+        await page.locator(".sidebar-rail__nav-toggle").click();
         const pluginPage = page.locator("openclaw-plugin-page");
         await pluginPage.getByRole("status", { name: "Loading…", exact: true }).waitFor();
         expect(

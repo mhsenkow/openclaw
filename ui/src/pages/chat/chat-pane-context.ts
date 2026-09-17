@@ -55,7 +55,7 @@ import {
 import { cancelChatScroll } from "./scroll.ts";
 import { clearChatMessagesFromCache } from "./session-message-cache.ts";
 import { migrateLegacyDockVisibility } from "./sidebar-layout-legacy-migration.ts";
-import { normalizeSidebarLayout } from "./sidebar-layout.ts";
+import { createDefaultAgentSidebarLayout, normalizeSidebarLayout } from "./sidebar-layout.ts";
 import { maybeResetToolStream } from "./stream-reconciliation.ts";
 import { reconcileWaitingApprovalsFromSnapshot } from "./tool-stream-status.ts";
 
@@ -452,7 +452,7 @@ export abstract class ChatPaneContext extends ChatPaneLifecycle {
           normalizeSidebarLayout(persistedLayout),
         );
       } else if (layoutClientChanged) {
-        state.sidebarLayout = { columns: [] };
+        state.sidebarLayout = createDefaultAgentSidebarLayout();
       } else if (sidebarKeyChanged && state.sidebarLayout.columns.length > 0) {
         state.updateSidebarLayout(state.sidebarLayout);
       }

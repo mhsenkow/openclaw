@@ -22,6 +22,7 @@ export const KEYBOARD_SHORTCUT_COMBOS = {
   homePanel: { modifiers: ["mod", "shift"], key: "h" },
   workspaceFiles: { modifiers: ["mod", "shift"], key: "b" },
   sideChat: { modifiers: ["mod", "shift"], key: "s" },
+  agentPanel: { modifiers: ["mod", "alt", "shift"], key: "a" },
   browserPanel: { modifiers: ["mod", "alt", "shift"], key: "u" },
   tasksPanel: { modifiers: ["mod", "alt", "shift"], key: "k" },
   desktopPanel: { modifiers: ["mod", "alt", "shift"], key: "d" },

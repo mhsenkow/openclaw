@@ -3,6 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createStorageMock } from "../test-helpers/storage.ts";
 import {
+  isSidebarSessionSectionCollapsed,
   loadStoredCollapsedSessionSections,
   loadStoredHiddenSessionCatalogIds,
   loadStoredSidebarSessionSortMode,
@@ -14,6 +15,7 @@ import {
   storeSidebarSessionStatusFilter,
   storeSidebarSessionOwnerFilter,
   storeSidebarSessionsShowPreview,
+  toggleSidebarSessionSection,
 } from "./app-sidebar-session-types.ts";
 
 // getSafeLocalStorage only accepts an own value property under Vitest, so the
@@ -142,8 +144,27 @@ describe("sidebar session sort preference", () => {
 });
 
 describe("collapsed sidebar sections preference", () => {
-  it("defaults Coding to compact while Online remains expanded", () => {
-    expect([...loadStoredCollapsedSessionSections()]).toEqual(["work"]);
+  it("defaults Coding and every CLI catalog to folded while Online remains expanded", () => {
+    const collapsed = loadStoredCollapsedSessionSections();
+    expect([...collapsed]).toEqual(["work", "catalog:*"]);
+    expect(isSidebarSessionSectionCollapsed(collapsed, "catalog:claude")).toBe(true);
+    expect(isSidebarSessionSectionCollapsed(collapsed, "catalog-project:claude:h:p")).toBe(false);
+    expect(isSidebarSessionSectionCollapsed(collapsed, "online")).toBe(false);
+  });
+
+  it("opens one catalog without silently expanding its siblings", () => {
+    const opened = toggleSidebarSessionSection(
+      loadStoredCollapsedSessionSections(),
+      "catalog:claude",
+      ["claude", "codex"],
+    );
+    expect([...opened]).toEqual(["work", "catalog:codex"]);
+    expect(isSidebarSessionSectionCollapsed(opened, "catalog:claude")).toBe(false);
+    expect(isSidebarSessionSectionCollapsed(opened, "catalog:codex")).toBe(true);
+
+    expect([...toggleSidebarSessionSection(opened, "catalog:claude", ["claude", "codex"])]).toEqual(
+      ["work", "catalog:codex", "catalog:claude"],
+    );
   });
 });
 

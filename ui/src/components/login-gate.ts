@@ -309,6 +309,16 @@ function renderFormBody(params: { props: LoginGateProps; feedback: LoginFailureF
           ${feedback?.summary ?? t("login.lede")}
         </p>
       </div>
+      ${
+        feedback?.primaryCommand
+          ? html`
+              <div class="login-gate__hero">
+                <span class="login-gate__hero-label">${t("login.runOnHost")}</span>
+                ${renderConnectCommand(feedback.primaryCommand, "hero")}
+              </div>
+            `
+          : nothing
+      }
       ${renderForm({ ...params, withSubmit: true })}
       ${
         feedback

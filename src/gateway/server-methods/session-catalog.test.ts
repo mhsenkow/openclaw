@@ -88,6 +88,65 @@ describe("session catalog Gateway methods", () => {
     expect(archive).toHaveBeenCalledWith(expect.objectContaining({ agentId: "beta" }));
   });
 
+  it("lists a thread once when a node reports the Gateway host's own sessions", async () => {
+    const session = (threadId: string) => ({
+      threadId,
+      status: "stored",
+      archived: false,
+      canContinue: true,
+      canArchive: false,
+    });
+    const gatewayHost = {
+      hostId: "gateway:local",
+      label: "Local Claude",
+      kind: "gateway" as const,
+      connected: true,
+      sessions: [session("shared-a"), session("shared-b")],
+    };
+    const nodeHost = {
+      hostId: "node:mac",
+      label: "Mac Studio",
+      kind: "node" as const,
+      connected: true,
+      nodeId: "mac",
+      sessions: [session("shared-a"), session("shared-b"), session("node-only")],
+    };
+    const broadcastToConnIds = vi.fn();
+    hoisted.activeRegistry.sessionCatalogs = [
+      {
+        provider: provider("claude", {
+          list: vi.fn(async ({ onHost }) => {
+            onHost?.(gatewayHost);
+            onHost?.(nodeHost);
+            return [gatewayHost, nodeHost];
+          }),
+        }),
+      },
+    ];
+
+    const respond = await call(
+      "sessions.catalog.list",
+      { progressId: "progress-1" },
+      {},
+      { connId: "requester", connect: {} },
+      { broadcastToConnIds },
+    );
+
+    const dedupedNodeHost = { ...nodeHost, sessions: [session("node-only")] };
+    expect(broadcastToConnIds).toHaveBeenNthCalledWith(
+      2,
+      "sessions.catalog.host",
+      expect.objectContaining({
+        catalog: expect.objectContaining({ hosts: [dedupedNodeHost] }),
+      }),
+      new Set(["requester"]),
+      { dropIfSlow: true },
+    );
+    expect(respond).toHaveBeenCalledWith(true, {
+      catalogs: [expect.objectContaining({ id: "claude", hosts: [gatewayHost, dedupedNodeHost] })],
+    });
+  });
+
   it("keeps differently ordered host filters distinct when sharing lists", async () => {
     const observedHostIds: Array<string[] | undefined> = [];
     const list = vi.fn(async ({ hostIds }: { hostIds?: string[] }) => {

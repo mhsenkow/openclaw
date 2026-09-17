@@ -113,7 +113,9 @@ suite.define(() => {
     await expect
       .poll(() =>
         sidebarBrand
-          .locator(".sidebar-brand__collapse, .sidebar-brand__search")
+          .locator(
+            ".sidebar-rail__nav-toggle, .sidebar-rail__button[aria-label='Open command palette']",
+          )
           .evaluateAll((buttons) =>
             buttons.map((button) => {
               const icon = button.querySelector("svg");
@@ -146,7 +148,9 @@ suite.define(() => {
       )
       .toEqual(["28px", "28px", "none"]);
     const actionStyles = await sidebarBrand
-      .locator(".sidebar-brand__collapse, .sidebar-brand__search, .sidebar-brand__new-thread")
+      .locator(
+        ".sidebar-rail__nav-toggle, .sidebar-rail__button[aria-label='Open command palette'], .sidebar-brand__new-thread",
+      )
       .evaluateAll((actions) =>
         actions.map((action) => {
           const icon = action.querySelector("svg");
@@ -169,7 +173,9 @@ suite.define(() => {
     await expect
       .poll(() =>
         sidebarBrand
-          .locator(".sidebar-brand__collapse, .sidebar-brand__search, .sidebar-brand__new-thread")
+          .locator(
+            ".sidebar-rail__nav-toggle, .sidebar-rail__button[aria-label='Open command palette'], .sidebar-brand__new-thread",
+          )
           .evaluateAll((actions) =>
             actions.map((action) => {
               const icon = action.querySelector("svg");
@@ -194,7 +200,9 @@ suite.define(() => {
     // button carries a private optical offset left over from a bordered box.
     const controlGaps = () =>
       sidebarBrand
-        .locator(".sidebar-brand__collapse, .sidebar-brand__search, .sidebar-brand__new-thread")
+        .locator(
+          ".sidebar-rail__nav-toggle, .sidebar-rail__button[aria-label='Open command palette'], .sidebar-brand__new-thread",
+        )
         .evaluateAll((actions) => {
           const [first, ...rest] = actions.map((action) => action.getBoundingClientRect());
           if (!first) {

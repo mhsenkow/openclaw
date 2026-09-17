@@ -1,4 +1,5 @@
 export type SidebarSlotId =
+  | "agent"
   | "browser"
   | "companion"
   | "conversation"

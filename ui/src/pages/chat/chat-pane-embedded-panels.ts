@@ -16,6 +16,7 @@ import { SIDEBAR_PANEL_SHORTCUTS } from "./chat-pane-panel-shortcuts.ts";
 import { resolveAssistantAttachmentAuthToken } from "./chat-pane-state.ts";
 import type { ChatSessionCompanionThread } from "./chat-session-companion.ts";
 import type { ChatPageHost } from "./chat-state-host.ts";
+import "./components/chat-agent-panel.ts";
 import { openTaskDetailId } from "./components/chat-detail-slot.ts";
 import {
   getSessionWorkspace,
@@ -68,6 +69,7 @@ type SidebarPanelDefinitionParams = {
   onCompanionSubmit: (question: string) => void;
   onCompanionDraftChange: (draft: string) => void;
   onCompanionVisibilityChange: (visible: boolean) => void;
+  agentPresented: boolean;
   connected: boolean;
   pendingQuestion: string | null;
   onClearCompanion: () => void;
@@ -131,7 +133,9 @@ export function sidebarPanelDefinitions(
         ? "chat"
         : textKey === "dashboard"
           ? "board"
-          : textKey,
+          : textKey === "agent"
+            ? "tasks"
+            : textKey,
       t(textKey === "desktop" ? "desktop.connecting" : "common.loading"),
     ),
     empty: { description: t(`chat.sidePanel.${textKey}Empty`) },
@@ -282,6 +286,21 @@ export function sidebarPanelDefinitions(
             </button>
           </openclaw-tooltip>`
         : undefined,
+    ),
+    definePanel(
+      "agent",
+      "agent",
+      icons.bot,
+      params
+        ? html`<openclaw-chat-agent-panel
+            .agentId=${params.agentId}
+            .sessionKey=${state?.sessionKey ?? ""}
+            .assistantName=${state?.assistantName ?? ""}
+            .assistantAvatar=${state?.assistantAvatar ?? null}
+            .assistantAvatarText=${null}
+            .presented=${params.agentPresented}
+          ></openclaw-chat-agent-panel>`
+        : null,
     ),
     definePanel(
       "tasks",

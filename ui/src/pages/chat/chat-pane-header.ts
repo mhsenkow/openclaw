@@ -43,7 +43,6 @@ import { ChatPaneDiscussion } from "./chat-pane-discussion.ts";
 import { sidebarPanelDefinitions } from "./chat-pane-embedded-panels.ts";
 import { resolveChatPaneDesktopTarget, resolveChatPanePlacement } from "./chat-pane-placement.ts";
 import { readChatSessionActionAccess } from "./chat-session-action-access.ts";
-import { renderBackgroundTasksToggle } from "./components/chat-background-tasks-render.ts";
 import type { BackgroundTasksProps } from "./components/chat-background-tasks.types.ts";
 import { isChatRunWorking } from "./components/chat-composer.ts";
 import "./components/chat-header-session-menu.ts";
@@ -360,22 +359,34 @@ export abstract class ChatPaneHeader extends ChatPaneDiscussion {
         ${sidePanelOpen ? icons.panelRightClose : icons.panelRightOpen}
       </button>
     </openclaw-tooltip>`;
-    const browserPanelAction = sessionWorkspace.onToggleBrowser
-      ? html`<openclaw-tooltip .content=${t("browser.toggle")}>
+    const agentPanelOpen = sessionWorkspace.agentPanelOpen === true;
+    const agentPanelAction = sessionWorkspace.onToggleAgent
+      ? html`<openclaw-tooltip .content=${t("chat.sidePanel.agent")}>
           <button
-            class="btn btn--ghost btn--icon chat-icon-btn chat-browser-panel-toggle"
+            class="btn btn--ghost btn--icon chat-icon-btn chat-agent-panel-toggle ${
+              agentPanelOpen ? "is-active" : ""
+            }"
             type="button"
-            aria-label=${t("browser.toggle")}
-            @click=${sessionWorkspace.onToggleBrowser}
+            aria-label=${t("chat.sidePanel.agent")}
+            aria-pressed=${String(agentPanelOpen)}
+            @click=${sessionWorkspace.onToggleAgent}
           >
-            ${icons.globe}
+            ${icons.bot}
           </button>
         </openclaw-tooltip>`
       : nothing;
-    const backgroundTasksAction = catalog ? nothing : renderBackgroundTasksToggle(backgroundTasks);
     const sessionRailMode = this.selectedSessionRailMode(this.state?.sessionKey ?? "");
     const toggleSessionRail = () => this.requestSessionRail("toggle");
     const panelMenuActions: HeaderMenuQuickAction[] = [];
+    if (sessionWorkspace.onToggleAgent) {
+      panelMenuActions.push({
+        id: "agent",
+        label: t("chat.sidePanel.agent"),
+        icon: icons.bot,
+        active: agentPanelOpen,
+        onActivate: sessionWorkspace.onToggleAgent,
+      });
+    }
     if (sessionWorkspace.onToggleTerminal) {
       panelMenuActions.push({
         id: "terminal",
@@ -571,7 +582,7 @@ export abstract class ChatPaneHeader extends ChatPaneDiscussion {
       copiedAction: this.headerCopiedAction,
       renameDisabledReason,
       actionsDisabled: this.state?.connected !== true,
-      panelActions: html`${browserPanelAction}${backgroundTasksAction}`,
+      panelActions: agentPanelAction,
       panelLayoutActions: html`${this.renderPanelLayoutActions(
         currentLayout,
         panelDefinitions,

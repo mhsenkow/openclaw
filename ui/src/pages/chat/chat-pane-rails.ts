@@ -97,6 +97,8 @@ export function createChatPaneRails(params: {
     onToggleDesktop: isDesktopPanelAvailable(params.gatewaySnapshot)
       ? () => togglePanelSlot("desktop")
       : undefined,
+    onToggleAgent: () => togglePanelSlot("agent"),
+    agentPanelOpen: isPanelVisible("agent"),
   };
   const backgroundTasksBase = createBackgroundTasksProps(state, {
     narrowLayout: false,

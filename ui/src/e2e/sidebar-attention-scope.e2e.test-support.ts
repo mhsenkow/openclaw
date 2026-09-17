@@ -312,7 +312,7 @@ export async function runSidebarAttentionScopeFlow(params: SidebarAttentionScope
         }),
     );
     const floatingKinds = await page
-      .locator(".sidebar-attention--floating [data-attention-kind]")
+      .locator(".sidebar-rail openclaw-sidebar-attention [data-attention-kind]")
       .evaluateAll((elements) =>
         elements.map((element) => element.getAttribute("data-attention-kind")),
       );
