@@ -112,7 +112,6 @@ describe("sidebar preference persistence", () => {
       "route:dashboards",
       "route:systems",
       "route:cron",
-      "route:plugins",
     ]);
     expect(loadSettings().navWidth).toBe(258);
   });

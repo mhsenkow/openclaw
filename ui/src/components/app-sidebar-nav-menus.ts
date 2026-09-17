@@ -13,6 +13,7 @@ import {
   SIDEBAR_NAV_ROUTES,
   type SidebarNavRoute,
   sidebarMoreRoutes,
+  subtitleForRoute,
   titleForRoute,
 } from "../app-navigation.ts";
 import { pathForRoute, pluginTabLocation } from "../app-route-paths.ts";
@@ -20,6 +21,7 @@ import { t } from "../i18n/index.ts";
 import { shouldHandleNavigationClick } from "../lib/navigation-click.ts";
 import type { ControlUiRegistration } from "../plugins/control-ui-capability.ts";
 import { icons, type IconName } from "./icons.ts";
+import "./tooltip.ts";
 import { consumeDropdownKeyboardDismissal, trackDropdownKeyboardDismissal } from "./web-awesome.ts";
 
 type SidebarMenuPosition = { x: number; y: number };
@@ -63,29 +65,40 @@ type SidebarNavRouteParams = {
   onCancelPreload: (event: Event) => void;
 };
 
+function railNavTooltip(label: string, detail?: string): string {
+  const trimmed = detail?.trim().replace(/\.$/, "");
+  return trimmed ? `${label} — ${trimmed}` : label;
+}
+
 export function renderSidebarNavRoute(params: SidebarNavRouteParams) {
+  const label = titleForRoute(params.routeId);
+  const tip = railNavTooltip(label, subtitleForRoute(params.routeId));
   return html`
-    <a
-      href=${params.href}
-      class="nav-item ${params.active ? "nav-item--active" : ""}"
-      @focus=${(event: Event) => params.onPreload(event)}
-      @blur=${params.onCancelPreload}
-      @pointerenter=${(event: Event) => params.onPreload(event)}
-      @pointerleave=${params.onCancelPreload}
-      @touchstart=${(event: TouchEvent) => params.onPreload(event, true)}
-      @click=${(event: MouseEvent) => {
-        if (!shouldHandleNavigationClick(event)) {
-          return;
-        }
-        event.preventDefault();
-        params.onNavigate();
-      }}
-    >
-      <span class="nav-item__icon" aria-hidden="true"
-        >${icons[navigationIconForRoute(params.routeId)]}</span
+    <openclaw-tooltip .content=${tip}>
+      <a
+        href=${params.href}
+        class="nav-item ${params.active ? "nav-item--active" : ""}"
+        aria-label=${label}
+        aria-current=${params.active ? "page" : nothing}
+        @focus=${(event: Event) => params.onPreload(event)}
+        @blur=${params.onCancelPreload}
+        @pointerenter=${(event: Event) => params.onPreload(event)}
+        @pointerleave=${params.onCancelPreload}
+        @touchstart=${(event: TouchEvent) => params.onPreload(event, true)}
+        @click=${(event: MouseEvent) => {
+          if (!shouldHandleNavigationClick(event)) {
+            return;
+          }
+          event.preventDefault();
+          params.onNavigate();
+        }}
       >
-      <span class="nav-item__text">${titleForRoute(params.routeId)}</span>
-    </a>
+        <span class="nav-item__icon" aria-hidden="true"
+          >${icons[navigationIconForRoute(params.routeId)]}</span
+        >
+        <span class="nav-item__text">${label}</span>
+      </a>
+    </openclaw-tooltip>
   `;
 }
 
@@ -97,22 +110,27 @@ export function renderSidebarPluginTab(params: {
 }) {
   const location = pluginTabLocation(params.tab, params.basePath);
   const iconName = Object.hasOwn(icons, params.tab.icon!) ? (params.tab.icon as IconName) : "plug";
+  const label = params.tab.label;
+  const tip = railNavTooltip(label);
   return html`
-    <a
-      href=${`${location.pathname}${location.search}`}
-      class="nav-item ${params.active ? "nav-item--active" : ""}"
-      aria-current=${params.active ? "page" : nothing}
-      @click=${(event: MouseEvent) => {
-        if (!shouldHandleNavigationClick(event)) {
-          return;
-        }
-        event.preventDefault();
-        params.onNavigate(location);
-      }}
-    >
-      <span class="nav-item__icon" aria-hidden="true">${icons[iconName]}</span>
-      <span class="nav-item__text">${params.tab.label}</span>
-    </a>
+    <openclaw-tooltip .content=${tip}>
+      <a
+        href=${`${location.pathname}${location.search}`}
+        class="nav-item ${params.active ? "nav-item--active" : ""}"
+        aria-label=${label}
+        aria-current=${params.active ? "page" : nothing}
+        @click=${(event: MouseEvent) => {
+          if (!shouldHandleNavigationClick(event)) {
+            return;
+          }
+          event.preventDefault();
+          params.onNavigate(location);
+        }}
+      >
+        <span class="nav-item__icon" aria-hidden="true">${icons[iconName]}</span>
+        <span class="nav-item__text">${label}</span>
+      </a>
+    </openclaw-tooltip>
   `;
 }
 

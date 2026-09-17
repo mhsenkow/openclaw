@@ -264,11 +264,16 @@
   align-items: center;
   gap: 8px;
   container-type: inline-size;
+  /* Match the reading column: header lives outside `.chat`, so the thread
+     max-width token is not inherited — keep the same 48rem contract here. */
+  --chat-pane-header-column: var(--chat-thread-max-width, 48rem);
   /* 48px centers the 28px actions on the app's shared 24px chrome
      centerline (sidebar brand row, floating toggles), so split headers
      line up with the sidebar across the top of the shell. */
   min-height: 48px;
-  padding: 0 6px 0 12px;
+  /* Align the title trail with the centered reading column (thread + composer). */
+  padding: 0 max(6px, calc((100% - var(--chat-pane-header-column)) / 2)) 0
+    max(12px, calc((100% - var(--chat-pane-header-column)) / 2));
   background: var(--chat-surface);
   /* Chrome row, not content: a selectable title would fight the native
      window drag the macOS app starts from this row. */
@@ -686,7 +691,8 @@ html.openclaw-native-web-chrome .shell--nav-collapsed:not(.shell--mobile-nav) {
 }
 
 /* Only the physical top-left header needs window-control clearance. A left
-   dock puts the side tabs there; mobile has a separate topbar row. */
+   dock puts the side tabs there; mobile has a separate topbar row.
+   Keep the reading-column center pad when it exceeds the chrome inset. */
 .shell:not(.shell--mobile-nav)
   .chat-split-view__column:first-child
   > .chat-split-view__cell:first-child
@@ -704,7 +710,10 @@ html.openclaw-native-web-chrome .shell--nav-collapsed:not(.shell--mobile-nav) {
     .sidebar-region--narrow
   )
   [data-region-header="side"] {
-  padding-left: var(--shell-titlebar-inset);
+  padding-left: max(
+    var(--shell-titlebar-inset),
+    calc((100% - var(--chat-pane-header-column, 48rem)) / 2)
+  );
 }
 
 /* Native pane headers share the window controls' centerline. Drawer layouts

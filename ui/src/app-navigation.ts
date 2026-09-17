@@ -16,7 +16,7 @@ type NavigationPresentation = readonly [icon: IconName, titleKey: string, subtit
 // The sidebar shows a small user-customizable ordered zone; every other nav route
 // lives in the collapsed "More" section. Chat is reachable through the session
 // list and Settings/Docs live in the sidebar footer, so neither is listed here.
-// Skills and Skill Workshop are reached from the Plugins workspace, not sidebar items.
+// Plugins, Skills, and Skill Workshop live in the settings takeover left nav.
 // Worktrees is a tab of the Sessions hub, so it is not listed either.
 // Workboard is plugin-owned and enters the zone through its Control UI descriptor.
 export const SIDEBAR_NAV_ROUTES = [
@@ -29,13 +29,11 @@ export const SIDEBAR_NAV_ROUTES = [
   "systems",
   "activity",
   "meetings",
-  "plugins",
   "apps",
   "portals",
 ] as const satisfies readonly NavigationRouteId[];
 
-// Routes presented as tabs of the Plugins hub. The sidebar highlights the
-// Plugins entry for all of them, mirroring how config covers settings routes.
+// Routes presented together in settings: Plugins, Skills, Skill Workshop.
 const PLUGINS_HUB_ROUTES: ReadonlySet<NavigationRouteId> = new Set([
   "plugins",
   "skills",
@@ -69,7 +67,7 @@ export type SidebarZoneEntry =
 // Keep the highest-value operational destinations visible on first use. Users
 // can still replace this route set through the customize menu.
 export const DEFAULT_SIDEBAR_ENTRIES = (
-  ["agents-home", "dashboards", "systems", "cron", "plugins"] as const
+  ["agents-home", "dashboards", "systems", "cron"] as const
 ).map((route) => serializeSidebarEntry({ type: "route", route }));
 
 /**
@@ -211,8 +209,9 @@ const SETTINGS_NAVIGATION_GROUPS = [
     routes: [
       "agents",
       "model-providers",
-      "plugin-settings",
-      "skill-settings",
+      "plugins",
+      "skills",
+      "skill-workshop",
       "mcp",
       "memory",
       "automation",
@@ -238,8 +237,9 @@ const NON_ADMIN_SETTINGS_ROUTES: ReadonlySet<NavigationRouteId> = new Set([
   "devices",
   "agents",
   "model-providers",
-  "plugin-settings",
-  "skill-settings",
+  "plugins",
+  "skills",
+  "skill-workshop",
   "memory",
   "approvals",
   "advanced",
@@ -302,6 +302,8 @@ const SETTINGS_SUBPAGE_ROUTES: readonly NavigationRouteId[] = [
   "ai-agents",
   "model-setup",
   "lobsterdex",
+  "plugin-settings",
+  "skill-settings",
 ];
 export const SETTINGS_SEARCHABLE_SUBPAGE_ROUTES: readonly NavigationRouteId[] = ["ai-agents"];
 const SETTINGS_SUBPAGE_OWNER_ROUTES: Partial<
@@ -309,6 +311,8 @@ const SETTINGS_SUBPAGE_OWNER_ROUTES: Partial<
 > = {
   "ai-agents": "agents",
   "model-setup": "model-providers",
+  "plugin-settings": "plugins",
+  "skill-settings": "skills",
 };
 
 const SETTINGS_NAVIGATION_ROUTES: ReadonlySet<NavigationRouteId> = new Set([

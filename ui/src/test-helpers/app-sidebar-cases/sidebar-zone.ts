@@ -222,7 +222,7 @@ describe("AppSidebar interleaved zone", () => {
         ),
       },
     });
-    sidebar.sidebarEntries = ["route:usage", "session:agent:main:alpha", "route:plugins"];
+    sidebar.sidebarEntries = ["route:usage", "session:agent:main:alpha", "route:apps"];
     await sidebar.updateComplete;
 
     const labels = [...sidebar.querySelectorAll<HTMLElement>(".sidebar-zone-entry")].map((entry) =>
@@ -382,7 +382,7 @@ describe("AppSidebar interleaved zone", () => {
 
   it("writes reordered entries after a route drop", async () => {
     const { sidebar } = await mountZone();
-    sidebar.sidebarEntries = ["route:usage", "route:plugins", "route:tasks"];
+    sidebar.sidebarEntries = ["route:usage", "route:apps", "route:tasks"];
     const onUpdate = vi.fn();
     sidebar.onUpdateSidebarEntries = onUpdate;
     await sidebar.updateComplete;
@@ -398,17 +398,17 @@ describe("AppSidebar interleaved zone", () => {
     dispatchDragEvent(target, "dragover", dataTransfer, 11);
     dispatchDragEvent(target, "drop", dataTransfer, 11);
 
-    expect(onUpdate).toHaveBeenCalledWith(["route:tasks", "route:usage", "route:plugins"]);
+    expect(onUpdate).toHaveBeenCalledWith(["route:tasks", "route:usage", "route:apps"]);
   });
 
   it("pins and inserts a session dropped from Threads", async () => {
     const { sidebar, sessions } = await mountZone();
-    sidebar.sidebarEntries = ["route:usage", "route:plugins"];
+    sidebar.sidebarEntries = ["route:usage", "route:apps"];
     const onUpdate = vi.fn();
     sidebar.onUpdateSidebarEntries = onUpdate;
     await sidebar.updateComplete;
     const source = sidebar.querySelector('[data-session-key="agent:main:alpha"]');
-    const target = zoneEntry(sidebar, "route:plugins");
+    const target = zoneEntry(sidebar, "route:apps");
     if (!source) {
       throw new Error("expected Alpha session row");
     }
@@ -434,7 +434,7 @@ describe("AppSidebar interleaved zone", () => {
       expect(onUpdate).toHaveBeenCalledWith([
         "route:usage",
         "session:agent:main:alpha",
-        "route:plugins",
+        "route:apps",
       ]),
     );
   });
@@ -456,7 +456,7 @@ describe("AppSidebar interleaved zone", () => {
         sessions: result.sessions.map((row) => (row === alpha ? promoted : row)),
       },
     });
-    sidebar.sidebarEntries = ["route:usage", "route:plugins"];
+    sidebar.sidebarEntries = ["route:usage", "route:apps"];
     const onUpdate = vi.fn();
     sidebar.onUpdateSidebarEntries = onUpdate;
     await sidebar.updateComplete;
@@ -464,7 +464,7 @@ describe("AppSidebar interleaved zone", () => {
     if (!source) {
       throw new Error("expected promoted child session row");
     }
-    const target = zoneEntry(sidebar, "route:plugins");
+    const target = zoneEntry(sidebar, "route:apps");
     const dataTransfer = createDataTransferStub();
     dispatchDragEvent(source, "dragstart", dataTransfer);
     dispatchDragEvent(target, "dragover", dataTransfer);
@@ -478,7 +478,7 @@ describe("AppSidebar interleaved zone", () => {
 
   it("hides a route dropped into the session-list region", async () => {
     const { sidebar } = await mountZone();
-    sidebar.sidebarEntries = ["route:usage", "route:plugins"];
+    sidebar.sidebarEntries = ["route:usage", "route:apps"];
     const onUpdate = vi.fn();
     sidebar.onUpdateSidebarEntries = onUpdate;
     await sidebar.updateComplete;
@@ -493,7 +493,7 @@ describe("AppSidebar interleaved zone", () => {
     dispatchDragEvent(target, "dragover", dataTransfer);
     dispatchDragEvent(target, "drop", dataTransfer);
 
-    expect(onUpdate).toHaveBeenCalledWith(["route:plugins"]);
+    expect(onUpdate).toHaveBeenCalledWith(["route:apps"]);
   });
 
   it.each([false, true])(

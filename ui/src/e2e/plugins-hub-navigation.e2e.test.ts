@@ -183,7 +183,7 @@ async function captureScreenshot(page: Page, name: string) {
   await writeFile(
     path.join(proofDir, name),
     await takeControlUiViewportScreenshot(page, page.locator(".shell"), [
-      page.locator(".plugins-hub-tabs"),
+      page.locator(".settings-sidebar"),
     ]),
   );
 }
@@ -193,6 +193,20 @@ async function expectActivePanelLabel(page: Page, labelId: string) {
   await panel.waitFor({ state: "visible" });
   expect(await panel.getAttribute("aria-labelledby")).toBe(labelId);
   expect(await page.locator(`#${labelId}`).count()).toBe(1);
+}
+
+async function expectSettingsHubNav(page: Page, active: "plugins" | "skills" | "skill-workshop") {
+  const sidebar = page.locator(".settings-modal__nav, .settings-sidebar");
+  await expect(sidebar.getByRole("link", { name: "Plugins", exact: true })).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: "Skills", exact: true })).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: "Skill workshop", exact: true })).toBeVisible();
+  const activeName =
+    active === "plugins" ? "Plugins" : active === "skills" ? "Skills" : "Skill workshop";
+  await expect(sidebar.getByRole("link", { name: activeName, exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  expect(await page.locator(".plugins-hub-tabs").count()).toBe(0);
 }
 
 suite.define(() => {
@@ -260,85 +274,43 @@ suite.define(() => {
         const pluginsHeader = await headerGeometry(page);
         expect(pluginsHeader.title).toBe("Plugins");
         await expectHeaderCopy(page, "plugins");
-        expect(await page.locator(".plugins-hub-tabs").getByRole("tab").count()).toBe(3);
-        expect(
-          await page.getByRole("tab", { name: "Plugins", exact: true }).getAttribute("active"),
-        ).not.toBeNull();
+        await expectSettingsHubNav(page, "plugins");
         expect(await page.getByRole("tab", { name: /Installed|Discover/u }).count()).toBe(0);
         expect(await page.locator(".plugins-tabs").count()).toBe(1);
         expect(await page.locator(".plugins-tabs.oc-segmented").count()).toBe(0);
-        const tabBox = await page.locator(".plugins-tabs").boundingBox();
-        const pluginTabBox = await page
-          .getByRole("tab", { name: "Plugins", exact: true })
-          .boundingBox();
-        expect(tabBox).not.toBeNull();
-        expect(pluginTabBox).not.toBeNull();
-        if (viewport.width > 900) {
-          // Desktop shells put hub tabs centered in the page toolbar row; the
-          // shell grid may still be settling, so poll both axes.
-          await expect
-            .poll(async () => {
-              const [cell, header] = await Promise.all([
-                page.locator(".plugins-hub-header .hub-page-header__tabs").boundingBox(),
-                page.locator(".plugins-hub-header").boundingBox(),
-              ]);
-              if (!cell || !header) {
-                return Number.POSITIVE_INFINITY;
-              }
-              return Math.max(
-                Math.abs(cell.y + cell.height / 2 - (header.y + 26)),
-                Math.abs(cell.x + cell.width / 2 - (header.x + header.width / 2)),
-              );
-            })
-            .toBeLessThanOrEqual(1);
-        } else {
-          // Drawer layouts keep the stacked header: tabs above the title,
-          // sharing its left edge.
-          const titleBox = await page.locator(".plugins-hub-header .page-title").boundingBox();
-          expect(titleBox).not.toBeNull();
-          expect(tabBox!.y + tabBox!.height).toBeLessThanOrEqual(titleBox!.y);
-          expect(Math.abs(tabBox!.x - titleBox!.x)).toBeLessThanOrEqual(1);
-        }
-        expect(pluginTabBox?.height ?? 0).toBeLessThanOrEqual(36);
+        await expect(page.locator(".settings-modal")).toBeVisible();
+        await expect(page.locator(".shell--settings-modal")).toBeVisible();
         await expectActivePanelLabel(page, "plugins-tab-plugins");
         const pluginInstallPresentation = await installButtonPresentation(page);
         await captureScreenshot(page, `${label}-01-installed-plugins.png`);
 
-        await page
-          .locator(".plugins-hub-tabs")
-          .getByRole("tab", { name: "Skills", exact: true })
-          .click();
+        await page.getByRole("link", { name: "Skills", exact: true }).click();
         await waitForControlUiRoute(page, { pathname: "/skills", routeId: "skills" });
         expectStableHeader(await headerGeometry(page), pluginsHeader);
         await expectHeaderCopy(page, "skills");
+        await expectSettingsHubNav(page, "skills");
         await expectActivePanelLabel(page, "plugins-tab-skills");
         expect(await installButtonPresentation(page)).toEqual(pluginInstallPresentation);
         await captureScreenshot(page, `${label}-02-skills.png`);
 
-        await page.getByRole("tab", { name: "Skill workshop", exact: true }).click();
+        await page.getByRole("link", { name: "Skill workshop", exact: true }).click();
         await waitForControlUiRoute(page, {
           pathname: "/skills/workshop",
           routeId: "skill-workshop",
         });
         expectStableHeader(await headerGeometry(page), pluginsHeader);
         await expectHeaderCopy(page, "skill-workshop");
+        await expectSettingsHubNav(page, "skill-workshop");
         await expectActivePanelLabel(page, "plugins-tab-skill-workshop");
-        expect(
-          await page
-            .getByRole("tab", { name: "Skill workshop", exact: true })
-            .getAttribute("active"),
-        ).not.toBeNull();
         await captureScreenshot(page, `${label}-03-workshop.png`);
 
-        await page
-          .locator(".plugins-hub-tabs")
-          .getByRole("tab", { name: "Skills", exact: true })
-          .click();
+        await page.getByRole("link", { name: "Skills", exact: true }).click();
         await waitForControlUiRoute(page, { pathname: "/skills", routeId: "skills" });
-        await page.getByRole("tab", { name: "Plugins", exact: true }).click();
+        await page.getByRole("link", { name: "Plugins", exact: true }).click();
         await waitForControlUiRoute(page, { pathname: "/plugins", routeId: "plugins" });
         expectStableHeader(await headerGeometry(page), pluginsHeader);
         await expectHeaderCopy(page, "plugins");
+        await expectSettingsHubNav(page, "plugins");
       } finally {
         await context.close();
       }

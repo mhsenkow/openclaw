@@ -1,46 +1,43 @@
 :root {
-  /* Background - Deep, rich dark with layered depth */
-  --bg: #0e1015;
-  --bg-accent: #13151b;
-  --bg-elevated: #191c24;
-  --bg-hover: #1f2330;
-  --bg-muted: #1f2330;
+  /* Rams / wordcount dark — flat graphite, warm accent, no purple glow */
+  --bg: #161616;
+  --bg-accent: #1a1a1a;
+  --bg-elevated: #1c1c1c;
+  --bg-hover: #242424;
+  --bg-muted: #242424;
+  --bg-content: #161616;
 
-  /* Card / Surface - Clear hierarchy between levels */
-  --card: #161920;
-  --card-foreground: #f0f0f2;
-  --card-highlight: rgba(255, 255, 255, 0.04);
-  --popover: #191c24;
-  --popover-foreground: #f0f0f2;
+  /* Card / Surface — face sits just above the canvas */
+  --card: #1c1c1c;
+  --card-foreground: #f0f0ee;
+  --card-highlight: rgba(255, 255, 255, 0.03);
+  --popover: #1c1c1c;
+  --popover-foreground: #f0f0ee;
   --session-hovercard-surface: color-mix(in srgb, var(--card) 94%, black 6%);
   --session-hovercard-progress-surface: color-mix(in srgb, var(--card) 58%, var(--bg) 42%);
 
   /* Panel */
-  --panel: #0e1015;
-  --panel-strong: #191c24;
-  --panel-hover: #1f2330;
-  --chrome: rgba(14, 16, 21, 0.96);
-  --chrome-strong: rgba(14, 16, 21, 0.98);
+  --panel: #161616;
+  --panel-strong: #1c1c1c;
+  --panel-hover: #222222;
+  --chrome: rgba(22, 22, 22, 0.96);
+  --chrome-strong: rgba(22, 22, 22, 0.98);
 
-  /* Text - Clean contrast
-   * Keep --muted AA on dark surfaces; do not dim muted body text with opacity.
-   * --text targets ~10:1 on --bg #0e1015 (10.1; 9.3 on --card) — the dark
-   * comfort band is ~10-12 and brighter body text halates on dark. */
+  /* Text — ink / mute from the wordcount instrument suite */
+  --text: #c8c8c4;
+  --text-strong: #f0f0ee;
+  --chat-text: #c8c8c4;
+  --muted: #8e8e8a;
+  --muted-strong: #9e9e9a;
+  --muted-foreground: #8e8e8a;
+  --file-icon-glyph: #a3a39f;
 
-  --text: #bcbcc0;
-  --text-strong: #f4f4f5;
-  --chat-text: #bcbcc0;
-  --muted: #8b8b94;
-  --muted-strong: #898990;
-  --muted-foreground: #8b8b94;
-  --file-icon-glyph: #a3a3a3;
-
-  /* Border - Whisper-thin, barely there */
-  --border: #1e2028;
-  --border-strong: #2e3040;
-  --border-hover: #3e4050;
-  --input: #1e2028;
-  --ring: #ff5c5c;
+  /* Border — hair / rule */
+  --border: #252525;
+  --border-strong: #333333;
+  --border-hover: #444444;
+  --input: #252525;
+  --ring: #e07a45;
 
   /* Shared rail chrome. Light and dark themes inherit their actual colors
      through --border/--accent while keeping one geometry contract. */
@@ -69,32 +66,27 @@
   --resize-handle-active-color: color-mix(in srgb, var(--text) 42%, transparent);
 
   /*
-   * Accent - Punchy signature red
+   * Accent — Braun/Rams warm orange (wordcount dark --accent)
    *
-   * WCAG 2.1 AA audit (bg = #0e1015, relative luminance ≈ 0.005):
-   *   --accent #ff5c5c on bg: 6.3:1 AA text ✓
-   *   --primary-foreground #ffffff on #d13c3c button: 4.75:1 AA ✓
-   *   --primary-foreground #ffffff on #c22e2e hover: 5.64:1 AA ✓
-   *   --destructive-foreground #fafafa on #d32f2f button: 4.77:1 AA ✓
-   *   --destructive-foreground #fafafa on #bc2a2a hover: 5.74:1 AA ✓
-   *   --card/--popover/--secondary foreground pairs: 15.4:1 / 14.9:1 / 15.4:1 ✓
-   *   --selection-fg #ffffff on --selection-bg #005fcc: 6.0:1 AA ✓
+   * WCAG 2.1 AA audit (bg = #161616):
+   *   --accent #e07a45 on bg: ~5.2:1 AA text ✓
+   *   --primary-foreground #ffffff on #c45c26 button: ~5.0:1 AA ✓
    */
-  --accent: #ff5c5c;
-  --accent-hover: #ff7070;
-  --accent-muted: #ff5c5c;
-  --accent-subtle: rgba(255, 92, 92, 0.1);
-  --accent-foreground: #fafafa;
-  --accent-glow: rgba(255, 92, 92, 0.2);
-  --inbox-attention: #e5243b;
+  --accent: #e07a45;
+  --accent-hover: #eb8a58;
+  --accent-muted: #e07a45;
+  --accent-subtle: rgba(224, 122, 69, 0.12);
+  --accent-foreground: #fafaf8;
+  --accent-glow: rgba(224, 122, 69, 0.18);
+  --inbox-attention: #e07070;
   --inbox-attention-hover: color-mix(in srgb, var(--inbox-attention) 88%, black);
   --inbox-attention-foreground: #ffffff;
 
   /* Lobster mascot icon (icons-tools.ts). Dark surfaces swallowed the shipped
      #ff4d4d→#991b1b gradient, so dark mode lifts both stops; light mode
      restores the original artwork below. */
-  --lobster-icon-body: #ff6d5a;
-  --lobster-icon-shade: #c2372b;
+  --lobster-icon-body: #e07a45;
+  --lobster-icon-shade: #c45c26;
   --lobster-icon-eye: #050810;
 
   /* Link text keeps the accent hue but cannot be --accent: chat paints user
@@ -109,13 +101,13 @@
   --link-hover: color-mix(in srgb, var(--link) 82%, var(--text));
   --selection-bg: #005fcc;
   --selection-fg: #ffffff;
-  --primary: #d13c3c;
-  --primary-hover: #c22e2e;
+  --primary: #c45c26;
+  --primary-hover: #a84c1e;
   --primary-foreground: #ffffff;
 
   /* Secondary */
-  --secondary: #161920;
-  --secondary-foreground: #f0f0f2;
+  --secondary: #1c1c1c;
+  --secondary-foreground: #f0f0ee;
   --accent-2: #14b8a6;
   --accent-2-muted: rgba(20, 184, 166, 0.7);
   --accent-2-subtle: rgba(20, 184, 166, 0.1);
@@ -204,7 +196,7 @@
   --pr-merged: #a78bfa;
 
   /* Focus */
-  --focus: rgba(255, 92, 92, 0.2);
+  --focus: rgba(224, 122, 69, 0.2);
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 3px color-mix(in srgb, var(--ring) 80%, transparent);
   --focus-glow: 0 0 0 2px var(--bg), 0 0 0 3px var(--ring), 0 0 16px var(--accent-glow);
 
@@ -226,13 +218,11 @@
   --theme-switch-x: 50%;
   --theme-switch-y: 50%;
 
-  /* Typography */
+  /* Typography — Helvetica stack from the wordcount instrument suite */
   --mono:
-    "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+    "SF Mono", ui-monospace, Menlo, Consolas, monospace;
   --font-shortcut: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Symbol", sans-serif;
-  /* Claw's own face (fonts/instrument-sans.css, loaded by app/typography.ts); the
-     stack keeps system fallbacks so a failed font load degrades gracefully. */
-  --font-body: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: Helvetica, "Helvetica Neue", Arial, sans-serif;
   --font-display: var(--font-body);
   /* Chat prose only. Defaults to the UI face; a theme may point it at a
      reading face without changing chrome, chips, tables, or code. */
@@ -290,13 +280,14 @@
      surfaces. Board layout math mirrors this value numerically. */
   --widget-frame-inset: var(--space-3);
 
-  /* Radii - Slightly larger for modern feel */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  /* Radii — quieter than the prior soft modern set; still above wordcount's 2px
+     so Control UI controls keep usable hit geometry. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
   --radius-full: 9999px;
-  --radius: 10px;
+  --radius: 6px;
 
   /* One profile for every scroll surface: 12px hit target, 6px visible thumb
      (transparent border + content-box clip). Derived from --muted so every
@@ -326,13 +317,13 @@
   --menu-padding: 4px;
   --menu-selected: color-mix(in srgb, var(--text) 8%, transparent);
 
-  /* Transitions - Crisp and responsive */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Transitions — Rams motion: decelerate, short, no bounce */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --duration-fast: 100ms;
-  --duration-normal: 180ms;
-  --duration-slow: 300ms;
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 140ms;
+  --duration-normal: 220ms;
+  --duration-slow: 320ms;
   --cursor-action: default;
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);
@@ -526,25 +517,24 @@
 /* Defaults must lose to named palettes even when their link precedes the app CSS. */
 :root:where([data-theme-mode="light"]) {
   /*
-   * Warm paper light mode - terracotta accent on ivory
+   * Wordcount / Rams light — cool paper, burnt-orange accent
    *
-   * WCAG 2.1 AA audit (bg = #faf9f7, relative luminance ≈ 0.941):
-   *   --accent #bd4531  contrast ≈ 4.9:1  AA text ✓
-   *   --primary-foreground #ffffff on #bd4531 button: 5.2:1 AA ✓
-   *   --text #403c35 ≈ 10.4:1 AAA ✓, --muted #6e6960 ≈ 5.2:1 AA ✓
+   * WCAG 2.1 AA audit (bg = #f2f2f0):
+   *   --accent #c45c26  contrast ≈ 4.8:1  AA text ✓
+   *   --text #111 ≈ 17:1 AAA ✓, --muted #757575 ≈ 4.6:1 AA ✓
    */
-  --bg: #faf9f7;
-  --bg-accent: #f4f1ec;
-  --bg-elevated: #ffffff;
-  --bg-hover: #efebe4;
-  --bg-muted: #efebe4;
-  --bg-content: #f4f1ec;
+  --bg: #f2f2f0;
+  --bg-accent: #ecece8;
+  --bg-elevated: #fafaf8;
+  --bg-hover: #e8e8e4;
+  --bg-muted: #e8e8e4;
+  --bg-content: #ecece8;
 
-  --card: #ffffff;
-  --card-foreground: #211e1a;
-  --card-highlight: rgba(60, 42, 24, 0.03);
-  --popover: #ffffff;
-  --popover-foreground: #211e1a;
+  --card: #fafaf8;
+  --card-foreground: #111111;
+  --card-highlight: rgba(17, 17, 17, 0.03);
+  --popover: #fafaf8;
+  --popover-foreground: #111111;
   --session-hovercard-surface: var(--card);
   --session-hovercard-progress-surface: color-mix(
     in srgb,
@@ -552,33 +542,33 @@
     var(--panel-strong) 46%
   );
 
-  --panel: #faf9f7;
-  --panel-strong: #f4f1ec;
-  --panel-hover: #e9e4dc;
-  --chrome: rgba(250, 249, 247, 0.96);
-  --chrome-strong: rgba(250, 249, 247, 0.98);
+  --panel: #f2f2f0;
+  --panel-strong: #fafaf8;
+  --panel-hover: #e4e4e0;
+  --chrome: rgba(242, 242, 240, 0.96);
+  --chrome-strong: rgba(242, 242, 240, 0.98);
 
-  --text: #403c35;
-  --text-strong: #211e1a;
-  --chat-text: #403c35;
-  --muted: #6e6960;
-  --muted-strong: #56524a;
-  --muted-foreground: #6e6960;
+  --text: #111111;
+  --text-strong: #111111;
+  --chat-text: #111111;
+  --muted: #5c5c5c;
+  --muted-strong: #4a4a4a;
+  --muted-foreground: #5c5c5c;
   --file-icon-glyph: #737373;
 
-  --border: #e8e4dc;
-  --border-strong: #d6d0c5;
-  --border-hover: #b4ac9e;
-  --input: #e8e4dc;
-  --ring: #bd4531;
+  --border: #e4e4e0;
+  --border-strong: #c4c4c0;
+  --border-hover: #a8a8a4;
+  --input: #e4e4e0;
+  --ring: #c45c26;
 
-  --accent: #bd4531;
-  --accent-hover: #a83c29;
-  --accent-muted: #bd4531;
-  --accent-subtle: rgba(189, 69, 49, 0.08);
+  --accent: #c45c26;
+  --accent-hover: #a84c1e;
+  --accent-muted: #c45c26;
+  --accent-subtle: rgba(196, 92, 38, 0.1);
   --accent-foreground: #ffffff;
-  --accent-glow: rgba(189, 69, 49, 0.12);
-  --primary: #bd4531;
+  --accent-glow: rgba(196, 92, 38, 0.14);
+  --primary: #c45c26;
   --primary-foreground: #ffffff;
 
   /* Original lobster artwork reads well on light surfaces. */
@@ -586,8 +576,8 @@
   --lobster-icon-shade: #991b1b;
   --lobster-icon-eye: #050810;
 
-  --secondary: #f4f1ec;
-  --secondary-foreground: #403c35;
+  --secondary: #fafaf8;
+  --secondary-foreground: #111111;
   --accent-2: #0d9488;
   --accent-2-muted: rgba(13, 148, 136, 0.75);
   --accent-2-subtle: rgba(13, 148, 136, 0.08);
@@ -641,11 +631,11 @@
   --info-subtle: rgba(29, 78, 216, 0.08);
   --pr-merged: #7c3aed;
 
-  --focus: rgba(189, 69, 49, 0.15);
+  --focus: rgba(196, 92, 38, 0.15);
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 3px color-mix(in srgb, var(--ring) 70%, transparent);
   --focus-glow: 0 0 0 2px var(--bg), 0 0 0 3px var(--ring), 0 0 12px var(--accent-glow);
 
-  --grid-line: rgba(60, 42, 24, 0.05);
+  --grid-line: rgba(17, 17, 17, 0.05);
 
   --hljs-keyword: #cf222e;
   --hljs-number: #0550ae;
@@ -657,14 +647,14 @@
   --hljs-deletion: #a40e26;
   --hljs-addition: #116329;
 
-  /* Light shadows - Subtle, warm-tinted */
-  --shadow-sm: 0 1px 2px rgba(60, 42, 24, 0.05);
-  --shadow-md: 0 4px 12px rgba(60, 42, 24, 0.07);
-  --shadow-lg: 0 12px 28px rgba(60, 42, 24, 0.09);
-  --shadow-xl: 0 24px 48px rgba(60, 42, 24, 0.11);
+  /* Light shadows — quiet graphite lift */
+  --shadow-sm: 0 1px 2px rgba(17, 17, 17, 0.05);
+  --shadow-md: 0 4px 12px rgba(17, 17, 17, 0.07);
+  --shadow-lg: 0 12px 28px rgba(17, 17, 17, 0.09);
+  --shadow-xl: 0 24px 48px rgba(17, 17, 17, 0.11);
   --shadow-glow: 0 0 20px var(--accent-glow);
   --overlay-border: color-mix(in srgb, var(--border-strong) 64%, transparent);
-  --overlay-shadow: 0 1px 2px rgb(60 42 24 / 0.035), 0 8px 24px rgb(60 42 24 / 0.065);
+  --overlay-shadow: 0 1px 2px rgb(17 17 17 / 0.035), 0 8px 24px rgb(17 17 17 / 0.065);
 
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23444' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 

@@ -41,13 +41,23 @@ export function renderLazySettingsSidebar(
       ${failed ? html`<button class="btn" @click=${() => host.retrySettingsSidebarRenderer()}>${t("common.retry")}</button>` : nothing}
     </section>`;
   }
-  return html`<aside class="settings-sidebar" aria-busy=${failed ? nothing : "true"}>
+  const modal = props.presentation === "modal";
+  return html`<aside
+    class="settings-sidebar ${modal ? "settings-sidebar--modal" : ""}"
+    aria-busy=${failed ? nothing : "true"}
+  >
     <header class="settings-sidebar__header" @mousedown=${beginNativeWindowDragFromTopInset}>
-      <button type="button" class="settings-sidebar__back" @click=${props.onExit}>
-        <span class="settings-sidebar__back-icon" aria-hidden="true">${icons.arrowLeft}</span>
-        ${t("nav.exitSettings")}
-      </button>
-      <h1 class="settings-sidebar__title">${t("nav.settings")}</h1>
+      ${
+        modal
+          ? html`<h1 class="settings-sidebar__title">${t("nav.settings")}</h1>`
+          : html`<button type="button" class="settings-sidebar__back" @click=${props.onExit}>
+                <span class="settings-sidebar__back-icon" aria-hidden="true"
+                  >${icons.arrowLeft}</span
+                >
+                ${t("nav.exitSettings")}
+              </button>
+              <h1 class="settings-sidebar__title">${t("nav.settings")}</h1>`
+      }
     </header>
     ${
       failed

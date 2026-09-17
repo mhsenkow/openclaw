@@ -115,6 +115,25 @@ describe("openclaw-tooltip", () => {
     },
   );
 
+  it("places icon-rail tooltips to the right of the trigger", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({ matches: false })),
+    );
+    try {
+      const rail = document.createElement("nav");
+      rail.className = "sidebar-rail";
+      const { tooltip, trigger } = createTooltip("Dashboards — Tasks with saved dashboards");
+      rail.append(tooltip);
+      document.body.append(rail);
+      await tooltip.updateComplete;
+      focusTrigger(trigger);
+      expect(webAwesomeTooltip(tooltip)?.getAttribute("placement")).toBe("right");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("reattaches trigger listeners after reconnect", async () => {
     const provider = createProvider();
     const { tooltip, trigger } = createTooltip("Reconnect tooltip");

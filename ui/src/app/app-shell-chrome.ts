@@ -202,21 +202,27 @@ export class ShellChromeOwner {
       }
       return;
     }
-    // A responsive handoff expands this shell without overwriting the desktop preference.
-    const nextNavCollapsed =
-      host.navDrawerOpen ||
-      !(context.navigation.snapshot.navCollapsed && !host.desktopNavigationExpanded);
+    // Toggle from the visible rail/list state. Preferring that over the raw
+    // preference flag avoids a stuck collapse after responsive handoffs leave
+    // desktopNavigationExpanded set while the list is already hidden.
+    const listCollapsedVisually =
+      Boolean(context.navigation.snapshot.navCollapsed) && !host.desktopNavigationExpanded;
+    const nextNavCollapsed = host.navDrawerOpen ? true : !listCollapsedVisually;
     host.desktopNavigationExpanded = false;
     if (nextNavCollapsed) {
       this.dismissSidebarTransientMenus();
     }
     host.closeNavDrawer();
     context.navigation.update({ navCollapsed: nextNavCollapsed });
-    if (nextNavCollapsed) {
-      void host.updateComplete.then(() => {
-        this.restoreFocusTo(host.querySelector<HTMLElement>(".sidebar-rail__nav-toggle"));
-      });
-    }
+    void host.updateComplete.then(() => {
+      this.restoreFocusTo(
+        host.querySelector<HTMLElement>(
+          nextNavCollapsed
+            ? ".sidebar-rail__nav-toggle"
+            : ".sidebar-brand__collapse, .sidebar-rail__nav-toggle",
+        ),
+      );
+    });
   };
 
   /** Native Mac chrome hides in-page toggles, so restoration falls back to content. */

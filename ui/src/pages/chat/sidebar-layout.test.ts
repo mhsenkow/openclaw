@@ -88,6 +88,16 @@ describe("sidebar layout", () => {
     expect(layout.open).toBe(true);
   });
 
+  it("restores a usable width when reopening a minimized agent column", () => {
+    const open = createDefaultAgentSidebarLayout();
+    const minimized = setSidebarOpen(open, false);
+    minimized.columns[0]!.width = 0;
+    const reopened = openSlot(minimized, "agent");
+    expect(reopened.open).toBe(true);
+    expect(isSidebarSlotVisible(reopened, "agent")).toBe(true);
+    expect(reopened.columns[0]?.width).toBeGreaterThanOrEqual(SIDEBAR_MIN_WIDTH_PX);
+  });
+
   it("activates an existing tab without changing its persisted order", () => {
     const layout = openAll();
     const dashboard = layout.columns[0]!.panels[1]!;

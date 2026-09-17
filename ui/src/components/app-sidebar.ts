@@ -35,7 +35,6 @@ import {
   renderAppSidebarBrand,
   renderAppSidebarHomeRow,
   renderAppSidebarOnline,
-  renderAppSidebarPagesHead,
   renderAppSidebarRailIdentity,
   renderAppSidebarZoneEntry,
 } from "./app-sidebar-render.ts";
@@ -633,25 +632,31 @@ class AppSidebar extends AppSidebarSessionNavigationElement implements SessionLi
           @mousedown=${beginNativeWindowDragFromTopInset}
         >
           <nav class="sidebar-rail" aria-label=${t("nav.askOpenClaw")}>
-            <div class="sidebar-rail__top">
+            <div class="sidebar-rail__chrome">
               <openclaw-tooltip
                 .content=${`${
                   listCollapsed ? t("nav.expand") : t("nav.collapse")
-                } (${formatKeyboardShortcutCombo(KEYBOARD_SHORTCUT_COMBOS.toggleSidebar)})`}
+                } · ${formatKeyboardShortcutCombo(KEYBOARD_SHORTCUT_COMBOS.toggleSidebar)}`}
               >
                 <button
                   type="button"
-                  class="sidebar-rail__button sidebar-rail__nav-toggle"
+                  class="sidebar-rail__button sidebar-rail__nav-toggle ${
+                    listCollapsed ? "sidebar-rail__nav-toggle--expand" : ""
+                  }"
                   aria-label=${listCollapsed ? t("nav.expand") : t("nav.collapse")}
                   aria-expanded=${String(!listCollapsed)}
                   ?disabled=${!this.onToggleSidebar}
-                  @click=${() => this.onToggleSidebar?.()}
+                  @click=${(event: MouseEvent) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.onToggleSidebar?.();
+                  }}
                 >
                   ${listCollapsed ? icons.panelLeftOpen : icons.panelLeftClose}
                 </button>
               </openclaw-tooltip>
               <openclaw-tooltip
-                .content=${`${t("chat.openCommandPalette")} (${formatKeyboardShortcutCombo(KEYBOARD_SHORTCUT_COMBOS.commandPalette)})`}
+                .content=${`${t("common.search")} — ${t("chat.openCommandPalette")} · ${formatKeyboardShortcutCombo(KEYBOARD_SHORTCUT_COMBOS.commandPalette)}`}
               >
                 <button
                   type="button"
@@ -663,6 +668,8 @@ class AppSidebar extends AppSidebarSessionNavigationElement implements SessionLi
                   ${icons.search}
                 </button>
               </openclaw-tooltip>
+            </div>
+            <div class="sidebar-rail__main">
               <div class="sidebar-rail__pins">
                 ${renderAppSidebarHomeRow(this)}
                 ${sidebarZone.entries
@@ -678,16 +685,20 @@ class AppSidebar extends AppSidebarSessionNavigationElement implements SessionLi
                     ),
                   )}
               </div>
-              ${renderAppSidebarPagesHead(this)}
             </div>
-            <div class="sidebar-rail__bottom">
+            <div class="sidebar-rail__footer">
               ${renderAppSidebarAttention(this)}
-              <openclaw-tooltip .content=${t("nav.settings")}>
+              <span class="sidebar-rail__theme">
+                <openclaw-theme-mode-toggle .mode=${this.themeMode}></openclaw-theme-mode-toggle>
+              </span>
+              <openclaw-tooltip
+                .content=${`${t("nav.settings")} — ${t("subtitles.appearance").replace(/\.$/, "")}`}
+              >
                 <button
                   type="button"
                   class="sidebar-rail__button"
                   aria-label=${t("nav.settings")}
-                  @click=${() => this.onNavigate?.("settings")}
+                  @click=${() => this.onNavigate?.("appearance")}
                 >
                   ${icons.settings}
                 </button>

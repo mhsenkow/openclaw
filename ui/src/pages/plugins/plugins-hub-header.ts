@@ -1,7 +1,7 @@
 import { html, nothing, type TemplateResult } from "lit";
 import { subtitleForRoute, titleForRoute } from "../../app-navigation.ts";
 import { renderLearnMoreLink } from "../../components/settings-ui.ts";
-import { renderPluginsHubTabs, type PluginsHubTab } from "./plugins-hub.ts";
+import type { PluginsHubTab } from "./plugins-hub.ts";
 
 const HUB_COPY = {
   plugins: {
@@ -20,7 +20,8 @@ const HUB_COPY = {
 
 type PluginsHubHeaderProps = {
   active: PluginsHubTab;
-  onSelect: (tab: PluginsHubTab) => void;
+  /** Retained for call-site stability; settings left nav owns hub switching. */
+  onSelect?: (tab: PluginsHubTab) => void;
   secondaryAction?: {
     label: string;
     icon?: TemplateResult;
@@ -30,18 +31,16 @@ type PluginsHubHeaderProps = {
 
 export function renderPluginsHubHeader(props: PluginsHubHeaderProps): TemplateResult {
   const copy = HUB_COPY[props.active];
+  // Hub destinations live in the settings left nav; keep page title/actions only.
   return html`
     <section
-      class="content-header content-header--settings content-header--page hub-page-header plugins-hub-header"
+      class="content-header content-header--settings content-header--page hub-page-header plugins-hub-header plugins-hub-header--settings-nav"
     >
       <div class="hub-page-header__title">
         <h1 class="page-title">${titleForRoute(copy.route)}</h1>
         <div class="page-subtitle">
           ${subtitleForRoute(copy.route)} ${renderLearnMoreLink(copy.docsUrl)}
         </div>
-      </div>
-      <div class="hub-page-header__tabs">
-        ${renderPluginsHubTabs({ active: props.active, onSelect: props.onSelect })}
       </div>
       <div class="hub-page-header__actions">
         ${

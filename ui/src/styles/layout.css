@@ -288,18 +288,19 @@ html:is(.openclaw-native-macos, .openclaw-native-nav, .openclaw-native-web-chrom
 }
 
 /* ===========================================
-   Settings Takeover
+   Settings modal (Muse-style floating panel)
    ===========================================
-   Settings routes replace the app chrome with a dedicated sidebar
-   (settings-sidebar.ts). Below the drawer breakpoint the regular mobile
-   shell stays in charge and the settings sidebar rides inside the drawer. */
+   Settings routes keep the app chrome underneath and open a floating left-nav
+   panel. Native embed still uses the dedicated settings sidebar in-shell. */
 
-/* stylelint-disable-next-line no-duplicate-selectors -- settings navigation variable belongs with the takeover rules below */
+/* stylelint-disable-next-line no-duplicate-selectors -- settings navigation variable belongs with the modal rules below */
 .shell {
-  --shell-settings-nav-width: 288px;
+  --shell-settings-nav-width: 280px;
+  --settings-modal-width: min(1180px, calc(100vw - 48px));
+  --settings-modal-height: min(860px, calc(100dvh - 48px));
 }
 
-.shell--settings:not(.shell--mobile-nav) {
+.shell--settings:not(.shell--settings-modal):not(.shell--mobile-nav) {
   --settings-content-block-start-padding: 44px;
   --settings-content-inline-padding: clamp(28px, 5vw, 72px);
   grid-template-columns: var(--shell-settings-nav-width) minmax(0, 1fr);
@@ -307,12 +308,124 @@ html:is(.openclaw-native-macos, .openclaw-native-nav, .openclaw-native-web-chrom
   --shell-nav-width: var(--shell-settings-nav-width);
 }
 
-.shell--settings:not(.shell--mobile-nav) .content {
+.shell--settings:not(.shell--settings-modal):not(.shell--mobile-nav) .content {
   padding: var(--settings-content-block-start-padding) var(--settings-content-inline-padding) 72px;
 }
 
-.shell--settings.shell--mobile-nav {
+.shell--settings.shell--mobile-nav:not(.shell--settings-modal) {
   --settings-content-block-start-padding: 4px;
+}
+
+.shell--settings-modal .content--settings-underlay {
+  pointer-events: none;
+}
+
+.settings-modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  pointer-events: none;
+}
+
+.settings-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  pointer-events: auto;
+  cursor: var(--cursor-action);
+  background: color-mix(in srgb, transparent 35%, black 65%);
+  backdrop-filter: blur(3px);
+}
+
+.settings-modal {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--shell-settings-nav-width) minmax(0, 1fr);
+  width: var(--settings-modal-width);
+  height: var(--settings-modal-height);
+  overflow: hidden;
+  pointer-events: auto;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius-lg) + 4px);
+  background: var(--panel);
+  box-shadow: var(--shadow-lg);
+  color: var(--text);
+}
+
+.settings-modal__nav {
+  min-width: 0;
+  min-height: 0;
+  border-inline-end: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 96%, var(--bg-elevated) 4%);
+}
+
+:root[data-theme-mode="light"] .settings-modal__nav {
+  background: color-mix(in srgb, var(--panel) 98%, white 2%);
+}
+
+.settings-modal__body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 44px clamp(28px, 4vw, 56px) 56px;
+}
+
+.settings-modal__close {
+  position: absolute;
+  top: 14px;
+  inset-inline-end: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted);
+  cursor: var(--cursor-action);
+}
+
+.settings-modal__close:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.settings-modal__close:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.settings-modal__close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-sidebar--modal {
+  height: 100%;
+  background: transparent;
+}
+
+.settings-sidebar--modal .settings-sidebar__header {
+  padding: 18px 16px 10px;
+}
+
+.settings-sidebar--modal .settings-sidebar__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-strong);
 }
 
 .shell--settings .connection-action-block {
@@ -321,23 +434,39 @@ html:is(.openclaw-native-macos, .openclaw-native-nav, .openclaw-native-web-chrom
   border-radius: 0;
 }
 
-.shell--settings:not(.shell--mobile-nav) .content--custodian {
+.shell--settings:not(.shell--settings-modal):not(.shell--mobile-nav) .content--custodian {
   padding: 0;
 }
 
-.shell--settings:not(.shell--mobile-nav) .content-header {
+.shell--settings:not(.shell--settings-modal):not(.shell--mobile-nav) .content-header {
   max-height: none;
 }
 
-.shell--settings:not(.shell--mobile-nav) .page-title {
+.shell--settings:not(.shell--settings-modal):not(.shell--mobile-nav) .page-title {
   font-size: 26px;
 }
 
 .shell--settings .content-header,
-.shell--settings .settings-workspace {
+.shell--settings .settings-workspace,
+.settings-modal__body .content-header,
+.settings-modal__body .settings-workspace {
   width: 100%;
   max-width: 1120px;
   margin-inline: auto;
+}
+
+@media (max-width: 900px) {
+  .settings-modal {
+    grid-template-columns: 1fr;
+    width: min(100vw - 24px, 720px);
+    height: min(100dvh - 24px, 920px);
+  }
+
+  .settings-modal__nav {
+    max-height: 42%;
+    border-inline-end: 0;
+    border-block-end: 1px solid var(--border);
+  }
 }
 
 .settings-sidebar {
@@ -1052,6 +1181,8 @@ openclaw-settings-save-indicator:empty {
   position: relative;
   z-index: 10;
   display: flex;
+  align-self: stretch;
+  height: 100%;
   min-height: 100%;
   overflow: visible;
   border-inline-end: var(--resize-handle-line-size) solid var(--resize-handle-rest-color);
@@ -1087,6 +1218,8 @@ openclaw-settings-save-indicator:empty {
   display: flex;
   flex-direction: column;
   flex: 1;
+  align-self: stretch;
+  height: 100%;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
@@ -1133,6 +1266,8 @@ openclaw-settings-save-indicator:empty {
   flex-direction: row;
   gap: 0;
   padding: 0;
+  height: 100%;
+  align-items: stretch;
 }
 
 .sidebar-rail {
@@ -1141,19 +1276,34 @@ openclaw-settings-save-indicator:empty {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
+  align-self: stretch;
   width: var(--shell-nav-rail-width);
+  min-height: 100%;
+  height: 100%;
   padding: 10px 0 12px;
   border-right: 1px solid var(--border);
-  background: color-mix(in srgb, var(--sidebar-bg) 92%, var(--bg-elevated) 8%);
+  background: var(--bg);
 }
 
-.sidebar-rail__top,
-.sidebar-rail__bottom {
+.sidebar-rail__chrome,
+.sidebar-rail__footer {
   display: flex;
+  flex: none;
   flex-direction: column;
   gap: 4px;
   align-items: center;
   width: 100%;
+}
+
+.sidebar-rail__main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
 }
 
 .sidebar-rail__pins {
@@ -1162,6 +1312,32 @@ openclaw-settings-save-indicator:empty {
   gap: 2px;
   align-items: center;
   width: 100%;
+}
+
+.sidebar-rail__theme {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-rail__theme .theme-mode-toggle,
+.sidebar-rail .theme-mode-toggle {
+  width: 32px;
+  height: 32px;
+  color: var(--muted);
+  border-radius: var(--radius-md);
+}
+
+.sidebar-rail__theme .theme-mode-toggle:hover,
+.sidebar-rail .theme-mode-toggle:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.sidebar-rail__theme .theme-mode-toggle svg,
+.sidebar-rail .theme-mode-toggle svg {
+  width: 18px;
+  height: 18px;
 }
 
 .sidebar-rail__button,
@@ -1188,6 +1364,17 @@ openclaw-settings-save-indicator:empty {
   background: color-mix(in srgb, var(--text) 8%, transparent);
 }
 
+.sidebar-rail__nav-toggle--expand {
+  color: var(--text);
+  outline: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.sidebar-rail__nav-toggle--expand:hover {
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
 .sidebar-rail__button svg,
 .sidebar-rail .nav-item__icon svg {
   width: 18px;
@@ -1199,6 +1386,28 @@ openclaw-settings-save-indicator:empty {
 .sidebar-rail .sidebar-nav__head-label,
 .sidebar-rail .sidebar-home-session-states {
   display: none;
+}
+
+.sidebar-rail .sidebar-zone-entry .sidebar-recent-session {
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.sidebar-rail .sidebar-zone-entry .sidebar-recent-session__text,
+.sidebar-rail .sidebar-zone-entry .sidebar-recent-session__aside,
+.sidebar-rail .sidebar-zone-entry .sidebar-child-session-toggle,
+.sidebar-rail .sidebar-zone-entry .session-action {
+  display: none;
+}
+
+.sidebar-rail .sidebar-zone-entry .sidebar-recent-session__link {
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+  width: 32px;
+  height: 32px;
 }
 
 .sidebar-rail .nav-item,

@@ -297,39 +297,45 @@ class SidebarAttention extends OpenClawLightDomElement {
     const label = t(count === 1 ? "attention.issueCount" : "attention.issueCountPlural", {
       count: String(count),
     });
+    const tip =
+      count > 0
+        ? t("attention.inboxTooltipCount", { count: String(count) })
+        : t("attention.inboxTooltip");
     return html`
       <span class="sr-only" role="status" aria-live="polite">${label}</span>
-      <button
-        type="button"
-        class="sidebar-issues-button"
-        aria-expanded=${String(this.panelOpen)}
-        aria-haspopup="dialog"
-        aria-controls="sidebar-issues-panel"
-        aria-label=${label}
-        @pointerenter=${this.preloadPanel}
-        @focus=${this.preloadPanel}
-        @pointerdown=${this.preloadPanel}
-        @click=${(event: MouseEvent) => {
-          const trigger = event.currentTarget;
-          if (!(trigger instanceof HTMLElement)) {
-            return;
+      <openclaw-tooltip .content=${tip}>
+        <button
+          type="button"
+          class="sidebar-issues-button"
+          aria-expanded=${String(this.panelOpen)}
+          aria-haspopup="dialog"
+          aria-controls="sidebar-issues-panel"
+          aria-label=${label}
+          @pointerenter=${this.preloadPanel}
+          @focus=${this.preloadPanel}
+          @pointerdown=${this.preloadPanel}
+          @click=${(event: MouseEvent) => {
+            const trigger = event.currentTarget;
+            if (!(trigger instanceof HTMLElement)) {
+              return;
+            }
+            if (this.panelOpen) {
+              this.closePanel(true);
+            } else {
+              void this.openPanel(trigger);
+            }
+          }}
+        >
+          <span class="sidebar-issues-button__icon" aria-hidden="true">${icons.inbox}</span>
+          ${
+            count > 0
+              ? html`<span class="sidebar-issues-button__count" aria-hidden="true"
+                  >${count > 9 ? "9+" : count}</span
+                >`
+              : nothing
           }
-          if (this.panelOpen) {
-            this.closePanel(true);
-          } else {
-            void this.openPanel(trigger);
-          }
-        }}
-      >
-        <span class="sidebar-issues-button__icon" aria-hidden="true">${icons.inbox}</span>
-        ${
-          count > 0
-            ? html`<span class="sidebar-issues-button__count" aria-hidden="true"
-                >${count > 9 ? "9+" : count}</span
-              >`
-            : nothing
-        }
-      </button>
+        </button>
+      </openclaw-tooltip>
       ${
         this.panelOpen && this.panelRenderer && this.mentions
           ? this.panelRenderer({

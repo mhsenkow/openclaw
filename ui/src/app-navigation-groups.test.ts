@@ -149,13 +149,14 @@ describe("sidebar entries", () => {
       "route:dashboards",
       "route:systems",
       "route:cron",
-      "route:plugins",
     ]);
     expect(isSettingsNavigationRoute("agents-home")).toBe(false);
+    expect(isSettingsNavigationRoute("plugins")).toBe(true);
   });
 
   it("drops retired routes from persisted entries", () => {
     expect(normalizeSidebarEntries(["route:overview", "route:usage"])).toEqual(["route:usage"]);
+    expect(normalizeSidebarEntries(["route:plugins", "route:usage"])).toEqual(["route:usage"]);
   });
 
   it("treats worktrees as a sessions hub tab without its own pin", () => {
@@ -197,7 +198,7 @@ describe("sidebar entries", () => {
     expect(settingsNavigationOwnerRoute("ai-agents")).toBe("agents");
   });
 
-  it.each(["plugin-settings", "skill-settings"] as const)(
+  it.each(["plugins", "skills", "skill-workshop"] as const)(
     "keeps %s visible to admins and read-only operators",
     (routeId) => {
       expect(visibleSettingsNavigationGroups(true).flatMap((group) => group.routes)).toContain(
@@ -205,6 +206,19 @@ describe("sidebar entries", () => {
       );
       expect(visibleSettingsNavigationGroups(false).flatMap((group) => group.routes)).toContain(
         routeId,
+      );
+    },
+  );
+
+  it.each(["plugin-settings", "skill-settings"] as const)(
+    "keeps %s as a settings subpage owned by its hub route",
+    (routeId) => {
+      expect(isSettingsNavigationRoute(routeId)).toBe(true);
+      expect(visibleSettingsNavigationGroups(true).flatMap((group) => group.routes)).not.toContain(
+        routeId,
+      );
+      expect(settingsNavigationOwnerRoute(routeId)).toBe(
+        routeId === "plugin-settings" ? "plugins" : "skills",
       );
     },
   );
@@ -239,12 +253,11 @@ describe("sidebar entries", () => {
     expect(isSettingsNavigationRoute("portals")).toBe(false);
   });
 
-  it("keeps the plugin manager in customizable workspace routes", () => {
+  it("drops plugins from customizable workspace routes after settings cutover", () => {
     expect(normalizeSidebarEntries(["route:plugins", "route:usage", "route:plugins"])).toEqual([
-      "route:plugins",
       "route:usage",
     ]);
-    expect(sidebarMoreRoutes(["route:usage", "session:agent:main:test"])).toContain("plugins");
+    expect(sidebarMoreRoutes(["route:usage", "session:agent:main:test"])).not.toContain("plugins");
   });
 
   it("round-trips route, Workboard, and session entries", () => {
@@ -257,7 +270,7 @@ describe("sidebar entries", () => {
       type: "plugin",
       key: "workboard/board-ops",
     });
-    expect(serializeSidebarEntry({ type: "route", route: "plugins" })).toBe("route:plugins");
+    expect(serializeSidebarEntry({ type: "route", route: "apps" })).toBe("route:apps");
     expect(serializeSidebarEntry({ type: "session", key: "agent:main:test" })).toBe(
       "session:agent:main:test",
     );

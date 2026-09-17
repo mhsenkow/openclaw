@@ -203,8 +203,7 @@ export function renderApplicationShell(host: ShellViewHost) {
     !nativeEmbed &&
     navigationSnapshot.navCollapsed &&
     !host.desktopNavigationExpanded &&
-    !navDrawerOpen &&
-    !settingsTakeover;
+    !navDrawerOpen;
   const navigationSurfaceHidden = navigationSurfaceIsHidden({
     onboarding,
     navCollapsed,
@@ -252,7 +251,7 @@ export function renderApplicationShell(host: ShellViewHost) {
   // The new-session draft shares the chat layout: full-height pane that owns
   // its scrolling and pins the composer dock to the bottom.
   const chatLikeRoute = sessionRoute || activeRoute === "new-session" || activeRoute === "systems";
-  if (!settingsTakeover && !nativeEmbed) {
+  if (!nativeEmbed) {
     Object.assign(host.navigationSidebar, {
       basePath: context.basePath,
       activeRouteId: activeRoute,
@@ -296,88 +295,98 @@ export function renderApplicationShell(host: ShellViewHost) {
         isRouteId(routeId) ? context.preload(routeId) : Promise.resolve(),
     });
   }
-  const navigationContent =
-    settingsTakeover || nativeEmbed
-      ? renderLazySettingsSidebar(host, {
-          presentation: nativeEmbed ? (embedSettingsRoot ? "embed-list" : "embed-page") : "sidebar",
-          basePath: context.basePath,
-          activeRouteId: activeRoute,
-          agents: context.agents.state.agentsList?.agents ?? [],
-          agentIdentity: context.agentIdentity,
-          settingsAgentSelection: context.settingsAgentSelection,
-          activePathname: host.routeState.location?.pathname ?? "",
-          activeSearch: host.routeState.location?.search ?? "",
-          activeHash: host.routeState.location?.hash ?? "",
-          offline: gatewaySnapshot.offlineStable,
-          phase: gatewaySnapshot.phase,
-          restartPending: gatewaySnapshot.restartPending,
-          suspensionPhase: gatewaySnapshot.suspensionPhase,
-          queuedOutboxCount: storedOutboxes?.total ?? 0,
-          lastError: gatewaySnapshot.lastError,
-          gatewayVersion: config.serverVersion ?? gatewaySnapshot.hello?.server?.version ?? "",
-          updateAvailable: navigationSurfaceHidden ? null : overlaySnapshot.updateAvailable,
-          updateSchedule: navigationSurfaceHidden ? null : overlaySnapshot.updateSchedule,
-          heldUpdateCampaignId: overlaySnapshot.heldUpdateCampaignId,
-          updateBusy,
-          updateStatusBanner: overlaySnapshot.updateStatusBanner,
-          watchUpdateProgress,
-          canUpdate,
-          canHoldUpdate,
-          onUpdate: () => void context.overlays.runUpdate(),
-          refreshRequired: navigationSurfaceHidden ? false : controlUiRefreshRequired,
-          onRefresh: host.refreshControlUi,
-          onHoldUpdate: () => context.overlays.holdUpdate(),
-          onReviewUpdate: () => host.navigate("updates"),
-          searchQuery: embedSettingsRoot ? "" : host.settingsSearchQuery,
-          searchParams: {
-            query: host.settingsSearchQuery,
-            schema: runtimeConfig.configSchema,
-            value: runtimeConfig.configForm ?? runtimeConfig.configSnapshot?.config ?? null,
-            uiHints: runtimeConfig.configUiHints,
-            identityAvailable: Boolean(gatewaySnapshot.selfUser),
-            basePath: context.basePath,
-            canAdmin: operatorAccess.canAdmin,
-            nativeDeviceSettings: context.nativeDeviceSettings,
-          },
-          onExit: () => {
-            if (!nativeEmbed) {
-              host.exitSettings();
-            } else if (canGoBackInNativeEmbed()) {
-              window.history.back();
-            } else if (activeRoute === "memory-import") {
-              context.replace("memory");
-            } else {
-              host.navigate("settings");
-            }
-          },
-          onRetryConnect: () => context.gateway.connect(),
-          onNavigate: (routeId, options) => host.navigate(routeId, options),
-          onOpenApprovals: () => host.openApprovals(),
-          onPreload: (routeId) => context.preload(routeId),
-          onSearchQueryChange: (nextQuery) => void host.handleSettingsSearchQueryChange(nextQuery),
-          preloadTimers: host.settingsPreloadTimers,
-          saveIndicator: {
-            status: runtimeConfig.configRecoveryError
-              ? "recovery"
-              : runtimeConfig.configAutoSaveStatus,
-            lastError: runtimeConfig.configRecoveryError ?? runtimeConfig.lastError,
-            needsApply: runtimeConfig.configNeedsApply,
-            applying: runtimeConfig.configApplying,
-            applyDisabled:
-              context.runtimeConfig.canApply === false ||
-              runtimeConfig.configLoading ||
-              runtimeConfig.configSaving ||
-              (runtimeConfig.configFormDirty && runtimeConfig.configFormMode === "raw") ||
-              updateBusy,
-            onRetry: () => void context.runtimeConfig.retry(),
-            onSave: () => void context.runtimeConfig.save(),
-            onReload: () => void context.runtimeConfig.discardDraft(),
-            onApply: () => void context.runtimeConfig.apply(),
-          },
-          canAdmin: operatorAccess.canAdmin,
-          nativeDeviceSettings: context.nativeDeviceSettings,
-        })
-      : host.navigationSidebar;
+  const settingsSidebarProps = {
+    presentation: (nativeEmbed ? (embedSettingsRoot ? "embed-list" : "embed-page") : "modal") as
+      | "sidebar"
+      | "embed-list"
+      | "embed-page"
+      | "modal",
+    basePath: context.basePath,
+    activeRouteId: activeRoute,
+    agents: context.agents.state.agentsList?.agents ?? [],
+    agentIdentity: context.agentIdentity,
+    settingsAgentSelection: context.settingsAgentSelection,
+    activePathname: host.routeState.location?.pathname ?? "",
+    activeSearch: host.routeState.location?.search ?? "",
+    activeHash: host.routeState.location?.hash ?? "",
+    offline: gatewaySnapshot.offlineStable,
+    phase: gatewaySnapshot.phase,
+    restartPending: gatewaySnapshot.restartPending,
+    suspensionPhase: gatewaySnapshot.suspensionPhase,
+    queuedOutboxCount: storedOutboxes?.total ?? 0,
+    lastError: gatewaySnapshot.lastError,
+    gatewayVersion: config.serverVersion ?? gatewaySnapshot.hello?.server?.version ?? "",
+    updateAvailable: navigationSurfaceHidden ? null : overlaySnapshot.updateAvailable,
+    updateSchedule: navigationSurfaceHidden ? null : overlaySnapshot.updateSchedule,
+    heldUpdateCampaignId: overlaySnapshot.heldUpdateCampaignId,
+    updateBusy,
+    updateStatusBanner: overlaySnapshot.updateStatusBanner,
+    watchUpdateProgress,
+    canUpdate,
+    canHoldUpdate,
+    onUpdate: () => void context.overlays.runUpdate(),
+    refreshRequired: navigationSurfaceHidden ? false : controlUiRefreshRequired,
+    onRefresh: host.refreshControlUi,
+    onHoldUpdate: () => context.overlays.holdUpdate(),
+    onReviewUpdate: () => host.navigate("updates"),
+    searchQuery: embedSettingsRoot ? "" : host.settingsSearchQuery,
+    searchParams: {
+      query: host.settingsSearchQuery,
+      schema: runtimeConfig.configSchema,
+      value: runtimeConfig.configForm ?? runtimeConfig.configSnapshot?.config ?? null,
+      uiHints: runtimeConfig.configUiHints,
+      identityAvailable: Boolean(gatewaySnapshot.selfUser),
+      basePath: context.basePath,
+      canAdmin: operatorAccess.canAdmin,
+      nativeDeviceSettings: context.nativeDeviceSettings,
+    },
+    onExit: () => {
+      if (!nativeEmbed) {
+        host.exitSettings();
+      } else if (canGoBackInNativeEmbed()) {
+        window.history.back();
+      } else if (activeRoute === "memory-import") {
+        context.replace("memory");
+      } else {
+        host.navigate("settings");
+      }
+    },
+    onRetryConnect: () => context.gateway.connect(),
+    onNavigate: (routeId: RouteId, options?: ApplicationNavigationOptions) =>
+      host.navigate(routeId, options),
+    onOpenApprovals: () => host.openApprovals(),
+    onPreload: (routeId: RouteId) => context.preload(routeId),
+    onSearchQueryChange: (nextQuery: string) =>
+      void host.handleSettingsSearchQueryChange(nextQuery),
+    preloadTimers: host.settingsPreloadTimers,
+    saveIndicator: {
+      status: runtimeConfig.configRecoveryError
+        ? ("recovery" as const)
+        : runtimeConfig.configAutoSaveStatus,
+      lastError: runtimeConfig.configRecoveryError ?? runtimeConfig.lastError,
+      needsApply: runtimeConfig.configNeedsApply,
+      applying: runtimeConfig.configApplying,
+      applyDisabled:
+        context.runtimeConfig.canApply === false ||
+        runtimeConfig.configLoading ||
+        runtimeConfig.configSaving ||
+        (runtimeConfig.configFormDirty && runtimeConfig.configFormMode === "raw") ||
+        updateBusy,
+      onRetry: () => void context.runtimeConfig.retry(),
+      onSave: () => void context.runtimeConfig.save(),
+      onReload: () => void context.runtimeConfig.discardDraft(),
+      onApply: () => void context.runtimeConfig.apply(),
+    },
+    canAdmin: operatorAccess.canAdmin,
+    nativeDeviceSettings: context.nativeDeviceSettings,
+  };
+  const navigationContent = nativeEmbed
+    ? renderLazySettingsSidebar(host, settingsSidebarProps)
+    : host.navigationSidebar;
+  const settingsModalNav =
+    settingsTakeover && !nativeEmbed
+      ? renderLazySettingsSidebar(host, settingsSidebarProps)
+      : nothing;
   // Optional tags stay mounted before definition. Lit replays their properties on upgrade,
   // and the upgraded panels catch the first toggle instead of dropping the event.
   const workspace = html`
@@ -416,7 +425,7 @@ export function renderApplicationShell(host: ShellViewHost) {
         mergedChatChrome ? "shell--merged-chat-chrome" : ""
       } ${navDrawerOpen ? "shell--nav-drawer-open" : ""} ${
         onboarding ? "shell--onboarding" : ""
-      } ${nativeEmbed ? "shell--embed" : ""} ${embedSettings ? "shell--embed-settings" : ""} ${settingsTakeover ? "shell--settings" : ""}"
+      } ${nativeEmbed ? "shell--embed" : ""} ${embedSettings ? "shell--embed-settings" : ""} ${settingsTakeover ? "shell--settings shell--settings-modal" : ""}"
       style=${`--shell-nav-expanded-width: ${navigationSnapshot.navWidth}px`}
       @theme-change=${(event: CustomEvent<ThemeModeChangeDetail>) => host.handleThemeChange(event)}
     >
@@ -446,7 +455,7 @@ export function renderApplicationShell(host: ShellViewHost) {
         nativeEmbed
           ? nothing
           : html`<openclaw-app-topbar
-              ?inert=${navDrawerOpen}
+              ?inert=${navDrawerOpen || !mobileNavLayout}
               .resourceBasePath=${context.resourceBasePath}
               .environment=${config.environment}
               .navDrawerOpen=${navDrawerOpen}
@@ -477,7 +486,7 @@ export function renderApplicationShell(host: ShellViewHost) {
                 aria-label=${mobileNavLayout ? t("palette.categories.navigation") : nothing}
                 aria-hidden=${mobileNavLayout && navigationSurfaceHidden ? "true" : nothing}
                 tabindex=${mobileNavLayout ? -1 : nothing}
-                ?inert=${navigationSurfaceHidden}
+                ?inert=${navigationSurfaceHidden || settingsTakeover}
               >
                 ${navigationContent}
               </div>`
@@ -503,10 +512,16 @@ export function renderApplicationShell(host: ShellViewHost) {
         id="control-ui-main"
         class="content ${chatLikeRoute ? "content--chat" : ""} ${
           activeRoute === "custodian" ? "content--custodian" : ""
-        } ${activeRoute === "workboard" ? "content--workboard" : ""}"
+        } ${activeRoute === "workboard" ? "content--workboard" : ""} ${
+          settingsTakeover && !nativeEmbed ? "content--settings-underlay" : ""
+        }"
         .tabIndex=${-1}
         @mousedown=${beginNativeWindowDragFromTopInset}
-        ?inert=${(!nativeEmbed && pageActionsBlocked) || (mobileNavLayout && navDrawerOpen)}
+        ?inert=${
+          (!nativeEmbed && pageActionsBlocked) ||
+          (mobileNavLayout && navDrawerOpen) ||
+          (settingsTakeover && !nativeEmbed)
+        }
       >
         ${
           pageActionsBlocked
@@ -552,8 +567,9 @@ export function renderApplicationShell(host: ShellViewHost) {
         })}
         ${nativeEmbed ? navigationContent : nothing}
         <openclaw-router-outlet
-          ?inert=${pageActionsBlocked || reloadRequired}
+          ?inert=${pageActionsBlocked || reloadRequired || (settingsTakeover && !nativeEmbed)}
           aria-disabled=${pageActionsBlocked || reloadRequired ? "true" : nothing}
+          .workspaceUnderlay=${settingsTakeover && !nativeEmbed}
           .router=${runtime.router}
           .retryContext=${context}
           .retentionScope=${gatewayPresentationScope(context.gateway)}
@@ -561,6 +577,46 @@ export function renderApplicationShell(host: ShellViewHost) {
           .notFoundRecoveryReady=${gatewayConnected}
         ></openclaw-router-outlet>
       </main>
+      ${
+        settingsTakeover && !nativeEmbed
+          ? html`<div class="settings-modal-layer">
+              <button
+                type="button"
+                class="settings-modal-backdrop"
+                tabindex="-1"
+                aria-label=${t("nav.exitSettings")}
+                @click=${() => host.exitSettings()}
+              ></button>
+              <div
+                class="settings-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-label=${t("nav.settings")}
+              >
+                <div class="settings-modal__nav">${settingsModalNav}</div>
+                <div class="settings-modal__body">
+                  <button
+                    type="button"
+                    class="settings-modal__close"
+                    aria-label=${t("common.close")}
+                    @click=${() => host.exitSettings()}
+                  >
+                    ${icons.x}
+                  </button>
+                  <openclaw-router-outlet
+                    ?inert=${pageActionsBlocked || reloadRequired}
+                    aria-disabled=${pageActionsBlocked || reloadRequired ? "true" : nothing}
+                    .router=${runtime.router}
+                    .retryContext=${context}
+                    .retentionScope=${gatewayPresentationScope(context.gateway)}
+                    .onNotFound=${() => host.recoverNotFoundRoute()}
+                    .notFoundRecoveryReady=${gatewayConnected}
+                  ></openclaw-router-outlet>
+                </div>
+              </div>
+            </div>`
+          : nothing
+      }
       <openclaw-terminal-panel
         ?inert=${navDrawerOpen}
         .client=${gatewayConnected ? gatewaySnapshot.client : null}

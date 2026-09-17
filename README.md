@@ -1,5 +1,17 @@
 # OpenClaw 🦞 — Your assistant, on your devices, in your chats
 
+> **Layout exploration (`OpenClaw-layoutexploration`)** — Muse-shaped Control UI: centered icon rail + sessions list, floating Settings over live chat, and Plugins / Skills / Skill workshop in the settings left nav.
+
+<p align="center">
+  <img src="docs/assets/layout-exploration/chat-rail-agent.png" alt="Control UI with centered rail, sessions list, chat, and Agent panel" width="900">
+</p>
+
+<p align="center">
+  <img src="docs/assets/layout-exploration/settings-modal.png" alt="Floating Settings modal over the live workspace" width="440">
+  &nbsp;
+  <img src="docs/assets/layout-exploration/settings-plugins.png" alt="Plugins hub inside Settings left navigation" width="440">
+</p>
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/openclaw-banner-light.png">

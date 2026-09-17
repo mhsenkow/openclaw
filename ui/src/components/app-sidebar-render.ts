@@ -283,42 +283,46 @@ export function renderAppSidebarHomeRow(host: AppSidebarRenderHost) {
     badge: unread && !running ? renderSessionUnreadBadge() : nothing,
   });
   return html`
-    <a
-      href=${
-        sessionNavigationTarget({
-          face: resolveSessionPreferredFace(mainRow),
-          sessionKey: mainKey,
-          fallbackAgentId: agentId,
-          basePath: host.basePath,
-          row: mainRow ?? undefined,
-          mainKey: parseAgentSessionKey(mainKey)?.rest,
-          preferenceDerivedFace: true,
-        }).href
-      }
-      class="nav-item nav-item--home ${active ? "nav-item--active" : ""}"
-      aria-label=${homeDescription ? `${t("nav.home")} · ${homeDescription}` : nothing}
-      aria-current=${active ? "page" : nothing}
-      @click=${(event: MouseEvent) => {
-        if (!shouldHandleNavigationClick(event)) {
-          return;
-        }
-        event.preventDefault();
-        host.openMainSession(agentId);
-      }}
+    <openclaw-tooltip
+      .content=${homeDescription ? `${t("nav.home")} — ${homeDescription}` : t("nav.home")}
     >
-      ${homeGlyph}
-      <span class="nav-item__text">${t("nav.home")}</span>
-      ${
-        outboxAttentionCount > 0 || hasComposerDraft
-          ? html`<span class="nav-item__state sidebar-home-session-states">
-              ${renderSessionRowBadges({
-                outboxAttentionCount,
-                hasComposerDraft,
-              })}
-            </span>`
-          : nothing
-      }
-    </a>
+      <a
+        href=${
+          sessionNavigationTarget({
+            face: resolveSessionPreferredFace(mainRow),
+            sessionKey: mainKey,
+            fallbackAgentId: agentId,
+            basePath: host.basePath,
+            row: mainRow ?? undefined,
+            mainKey: parseAgentSessionKey(mainKey)?.rest,
+            preferenceDerivedFace: true,
+          }).href
+        }
+        class="nav-item nav-item--home ${active ? "nav-item--active" : ""}"
+        aria-label=${homeDescription ? `${t("nav.home")} · ${homeDescription}` : t("nav.home")}
+        aria-current=${active ? "page" : nothing}
+        @click=${(event: MouseEvent) => {
+          if (!shouldHandleNavigationClick(event)) {
+            return;
+          }
+          event.preventDefault();
+          host.openMainSession(agentId);
+        }}
+      >
+        ${homeGlyph}
+        <span class="nav-item__text">${t("nav.home")}</span>
+        ${
+          outboxAttentionCount > 0 || hasComposerDraft
+            ? html`<span class="nav-item__state sidebar-home-session-states">
+                ${renderSessionRowBadges({
+                  outboxAttentionCount,
+                  hasComposerDraft,
+                })}
+              </span>`
+            : nothing
+        }
+      </a>
+    </openclaw-tooltip>
   `;
 }
 
@@ -326,17 +330,19 @@ export function renderAppSidebarPagesHead(host: AppSidebarRenderHost) {
   return html`
     <div class="sidebar-nav__head">
       <span class="sidebar-recent-sessions__label-text sr-only">${t("nav.pages")}</span>
-      <button
-        type="button"
-        class="sidebar-nav__head-action"
-        aria-haspopup="menu"
-        aria-expanded=${String(host.sidebarMenus.moreMenuPosition !== null)}
-        aria-label=${t("nav.customize")}
-        @click=${(event: MouseEvent) =>
-          host.sidebarMenus.toggleMoreMenu(event.currentTarget as HTMLElement)}
-      >
-        ${icons.penLine}
-      </button>
+      <openclaw-tooltip .content=${t("nav.customize")}>
+        <button
+          type="button"
+          class="sidebar-nav__head-action"
+          aria-haspopup="menu"
+          aria-expanded=${String(host.sidebarMenus.moreMenuPosition !== null)}
+          aria-label=${t("nav.customize")}
+          @click=${(event: MouseEvent) =>
+            host.sidebarMenus.toggleMoreMenu(event.currentTarget as HTMLElement)}
+        >
+          ${icons.penLine}
+        </button>
+      </openclaw-tooltip>
     </div>
   `;
 }
@@ -564,6 +570,7 @@ export function renderAppSidebarZoneEntry(
       ? host.sessionOrganizer.sidebarZoneDropTarget.position
       : null;
   const pluginTab = entry.type === "plugin" ? pluginTabs.get(entry.key) : undefined;
+  const pinnedSession = entry.type === "session" ? sessionRows.get(entry.key) : undefined;
   const content =
     entry.type === "route"
       ? host.sidebarMenus.renderRoute(entry.route)
@@ -574,8 +581,10 @@ export function renderAppSidebarZoneEntry(
               .kind=${"navigation"}
               .navigationKey=${entry.key}
             ></openclaw-plugin-contributions>`
-          : sessionRows.has(entry.key)
-            ? host.renderPinnedSidebarSession(sessionRows.get(entry.key)!)
+          : pinnedSession
+            ? html`<openclaw-tooltip .content=${pinnedSession.label}
+                >${host.renderPinnedSidebarSession(pinnedSession)}</openclaw-tooltip
+              >`
             : nothing;
   const draggable = entry.type === "route" || entry.type === "plugin";
   return html`
@@ -645,16 +654,18 @@ export function renderAppSidebarRailIdentity(host: AppSidebarRenderHost) {
   };
   const identityMenuLabel = t("profilePage.identity.menuButtonLabel", { name: selfLabel });
   return html`
-    <button
-      type="button"
-      class="sidebar-rail__identity"
-      aria-haspopup="menu"
-      aria-expanded=${String(host.sidebarMenus.identityMenuPosition !== null)}
-      aria-label=${identityMenuLabel}
-      @click=${(event: MouseEvent) =>
-        host.sidebarMenus.toggleIdentityMenu(event.currentTarget as HTMLElement)}
-    >
-      <openclaw-viewer-avatar .user=${avatarUser} variant="footer"></openclaw-viewer-avatar>
-    </button>
+    <openclaw-tooltip .content=${t("profilePage.identity.railTooltip", { name: selfLabel })}>
+      <button
+        type="button"
+        class="sidebar-rail__identity"
+        aria-haspopup="menu"
+        aria-expanded=${String(host.sidebarMenus.identityMenuPosition !== null)}
+        aria-label=${identityMenuLabel}
+        @click=${(event: MouseEvent) =>
+          host.sidebarMenus.toggleIdentityMenu(event.currentTarget as HTMLElement)}
+      >
+        <openclaw-viewer-avatar .user=${avatarUser} variant="footer"></openclaw-viewer-avatar>
+      </button>
+    </openclaw-tooltip>
   `;
 }

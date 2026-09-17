@@ -81,6 +81,15 @@ export function createChatPaneRails(params: {
   };
   const togglePanelSlot = (slot: SidebarSlotId) =>
     isPanelVisible(slot) ? closePanelSlot(slot) : openPanelSlot(slot);
+  const toggleAgentPanel = () => {
+    // Prefer a reliable reopen path: if the column is closed, always open Agent
+    // rather than toggling against stale visibility from a minimized column.
+    if (sidebarLayout.open !== true || !isPanelVisible("agent")) {
+      openPanelSlot("agent");
+      return;
+    }
+    closePanelSlot("agent");
+  };
   const sessionWorkspaceBase = createSessionWorkspaceProps(state, {
     draftScope: params.presentationId,
     expanded: isSidebarSlotVisible(sidebarLayout, "workspace"),
@@ -97,7 +106,7 @@ export function createChatPaneRails(params: {
     onToggleDesktop: isDesktopPanelAvailable(params.gatewaySnapshot)
       ? () => togglePanelSlot("desktop")
       : undefined,
-    onToggleAgent: () => togglePanelSlot("agent"),
+    onToggleAgent: toggleAgentPanel,
     agentPanelOpen: isPanelVisible("agent"),
   };
   const backgroundTasksBase = createBackgroundTasksProps(state, {

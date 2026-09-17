@@ -45,7 +45,7 @@ import "./sidebar-build-chip.ts";
 type AgentRosterRow = AgentsListResult["agents"][number];
 
 type SettingsSidebarProps = {
-  presentation?: "sidebar" | "embed-list" | "embed-page";
+  presentation?: "sidebar" | "embed-list" | "embed-page" | "modal";
   basePath: string;
   activeRouteId: RouteId;
   agents: readonly AgentRosterRow[];
@@ -416,15 +416,24 @@ export function renderSettingsSidebar(props: SettingsSidebarProps) {
       ${renderEmbeddedSettingsHeader(props)} ${renderSettingsAgentSelector(props)} ${navigation}
     </section>`;
   }
+  const modal = props.presentation === "modal";
   return html`
-    <aside class="settings-sidebar">
+    <aside class="settings-sidebar ${modal ? "settings-sidebar--modal" : ""}">
       <header class="settings-sidebar__header" @mousedown=${beginNativeWindowDragFromTopInset}>
-        <button type="button" class="settings-sidebar__back" @click=${() => props.onExit()}>
-          <span class="settings-sidebar__back-icon" aria-hidden="true">${icons.arrowLeft}</span>
-          ${t("nav.exitSettings")}
-          <kbd class="settings-sidebar__esc" aria-hidden="true">esc</kbd>
-        </button>
-        <h1 class="settings-sidebar__title">${t("nav.settings")}</h1>
+        ${
+          modal
+            ? html`<h1 class="settings-sidebar__title">${t("nav.settings")}</h1>`
+            : html`
+                <button type="button" class="settings-sidebar__back" @click=${() => props.onExit()}>
+                  <span class="settings-sidebar__back-icon" aria-hidden="true"
+                    >${icons.arrowLeft}</span
+                  >
+                  ${t("nav.exitSettings")}
+                  <kbd class="settings-sidebar__esc" aria-hidden="true">esc</kbd>
+                </button>
+                <h1 class="settings-sidebar__title">${t("nav.settings")}</h1>
+              `
+        }
       </header>
       ${renderSettingsAgentSelector(props)}
       <div class="settings-sidebar__search" role="search">

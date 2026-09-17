@@ -33,14 +33,17 @@ class ThemeModeToggle extends OpenClawLightDomContentsElement {
           ? "common.light"
           : "common.dark";
     const label = t(labelKey);
-    const tooltip = t("common.colorModeOption", { mode: label });
+    const tooltip = t(
+      this.mode === "system" ? "common.colorModeTooltipSystem" : "common.colorModeTooltip",
+      { mode: label },
+    );
 
     return html`
       <openclaw-tooltip .content=${tooltip}>
         <button
           type="button"
           class="theme-mode-toggle"
-          aria-label=${tooltip}
+          aria-label=${t("common.colorModeOption", { mode: label })}
           @click=${this.handleModeChange}
         >
           ${this.mode === "system" ? icons.monitor : this.mode === "light" ? icons.sun : icons.moon}

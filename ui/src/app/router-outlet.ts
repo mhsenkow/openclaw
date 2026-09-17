@@ -4,6 +4,7 @@ import type { ReactiveController, ReactiveControllerHost } from "lit";
 import { property } from "lit/decorators.js";
 import { keyed } from "lit/directives/keyed.js";
 import { createRef, ref } from "lit/directives/ref.js";
+import { isSettingsNavigationRoute } from "../app-navigation.ts";
 import { isSessionRouteId } from "../app-route-paths.ts";
 import { renderLazyViewError } from "../components/lazy-view-error.ts";
 import { renderLoadingState } from "../components/loading-state.ts";
@@ -250,6 +251,11 @@ class OpenClawRouterOutlet<
   @property({ attribute: false }) retryContext?: TLoadContext;
   @property({ attribute: false }) onNotFound?: () => boolean | void;
   @property({ attribute: false }) notFoundRecoveryReady?: boolean;
+  /**
+   * When true, keep the retained workspace page visible and suppress the active
+   * settings route so a floating settings modal can overlay the real UI.
+   */
+  @property({ type: Boolean }) workspaceUnderlay = false;
   private readonly outlet = new LitRouterOutletController(this, () => ({
     router: this.router,
     onNotFound: this.onNotFound,
@@ -346,20 +352,36 @@ class OpenClawRouterOutlet<
       module?.retainOnNavigate === true &&
       explicitOwnerKey !== undefined &&
       (ready || retainPending);
+    const settingsOverlayUnderlay =
+      this.workspaceUnderlay &&
+      renderedMatch !== undefined &&
+      isSettingsNavigationRoute(renderedMatch.routeId);
     if (presentRetained && ready) {
       this.retainedMatch = renderedMatch;
       this.retainedOwnerKey = explicitOwnerKey;
-    } else if (snapshot.status === "idle" || (scopeReady && module?.retainOnNavigate && !waiting)) {
+    } else if (
+      !settingsOverlayUnderlay &&
+      (snapshot.status === "idle" || (scopeReady && module?.retainOnNavigate && !waiting))
+    ) {
       // Invalid session destinations still replace their old owner; only a
       // successful session page opts into retention across unrelated routes.
       this.retainedMatch = undefined;
       this.retainedOwnerKey = undefined;
     }
-    this.retainedPresented = presentRetained;
+    this.retainedPresented =
+      presentRetained || (settingsOverlayUnderlay && this.retainedMatch !== undefined);
+    const showRetainedWorkspace = this.retainedPresented;
     const retained = this.retainedMatch;
     const retainedKey = `${this.scopeGeneration}:${this.retainedOwnerKey ?? "empty"}`;
-    const transientKey = presentRetained ? "empty" : (explicitOwnerKey ?? routeKey);
+    const transientKey = showRetainedWorkspace
+      ? settingsOverlayUnderlay
+        ? "settings-underlay"
+        : "empty"
+      : (explicitOwnerKey ?? routeKey);
     const renderTransient = () => {
+      if (settingsOverlayUnderlay) {
+        return nothing;
+      }
       if (isSessionRouteId(renderedMatch?.routeId) && !scopeReady) {
         return !retiredSession && renderedMatch?.error !== undefined
           ? renderError(router, this.retryContext, renderedMatch.error, renderedMatch.routeId)
@@ -384,7 +406,7 @@ class OpenClawRouterOutlet<
                 html`<openclaw-route-presentation
                   ${ref(this.retainedPresentation)}
                   .ownerKey=${retainedKey}
-                  .presented=${presentRetained}
+                  .presented=${showRetainedWorkspace}
                   .renderPage=${(presented: boolean) =>
                     renderRouterOutlet(router, snapshot, retained, {
                       retryContext: this.retryContext,
@@ -397,7 +419,7 @@ class OpenClawRouterOutlet<
       )}
       ${this.transientUnmountGate.render(
         transientKey,
-        () => (presentRetained ? nothing : renderTransient()),
+        () => (showRetainedWorkspace && !settingsOverlayUnderlay ? nothing : renderTransient()),
         () => [...this.children].filter((child) => child !== this.retainedPresentation.value),
         {
           retainRenderedValue:
@@ -407,14 +429,14 @@ class OpenClawRouterOutlet<
             renderedMatch.data === undefined,
         },
       )}
-      ${presentRetained && this.retainedUnmountGate.retiring ? renderLoadingState() : nothing}
+      ${showRetainedWorkspace && this.retainedUnmountGate.retiring ? renderLoadingState() : nothing}
     `;
     // The gates publish retirement during render and schedule surviving MCP
     // restarts before these presentation updates. A returning owner stays inert
     // throughout teardown, even when its key matches the still-connected subtree.
     if (this.retainedPresentation.value) {
       this.retainedPresentation.value.presented =
-        presentRetained &&
+        showRetainedWorkspace &&
         !this.retainedUnmountGate.retiring &&
         this.retainedPresentation.value.ownerKey === retainedKey;
     }

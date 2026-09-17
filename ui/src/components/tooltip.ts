@@ -650,10 +650,14 @@ class Tooltip extends OpenClawLitElement {
   };
 
   private resolvedPlacement(): WaTooltip["placement"] {
-    return (this.placement === "right-start" || this.placement === "right") &&
+    // Icon rails sit on the left edge — keep tip labels to the right so they
+    // never cover the glyph or spill off-screen to the left.
+    const placement =
+      this.placement === "top" && this.closest(".sidebar-rail") ? "right" : this.placement;
+    return (placement === "right-start" || placement === "right") &&
       this.ownerDocument.defaultView?.matchMedia?.("(max-width: 640px)").matches
       ? "bottom-start"
-      : this.placement;
+      : placement;
   }
 
   override render() {

@@ -7,6 +7,7 @@ import {
   sidebarSidePanels,
   sidebarActivePanel,
   isSidebarSlotVisible,
+  SIDEBAR_MIN_WIDTH_PX,
 } from "./sidebar-layout-geometry.ts";
 import type {
   SidebarColumn,
@@ -168,6 +169,11 @@ export function openSlot(layout: SidebarLayout, slot: SidebarSlotId): SidebarLay
     const column = next.columns.find((entry) => entry.panels.includes(existing));
     if (column) {
       column.activePanelId = existing.id;
+      // A minimized column can retain a sub-minimum width from a prior fit;
+      // restore a usable muse width so reopen is never a zero-width ghost.
+      if (!Number.isFinite(column.width) || column.width < SIDEBAR_MIN_WIDTH_PX) {
+        column.width = slot === "agent" ? SIDEBAR_AGENT_DEFAULT_WIDTH_PX : SIDEBAR_DEFAULT_WIDTH_PX;
+      }
     }
     return next;
   }

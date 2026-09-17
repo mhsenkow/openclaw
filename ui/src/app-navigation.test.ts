@@ -5,7 +5,9 @@ import {
   SIDEBAR_NAV_ROUTES,
   formatDocumentTitle,
   isPluginsHubRoute,
+  isSettingsNavigationRoute,
   navigationIconForRoute,
+  settingsNavigationOwnerRoute,
   settingsSearchTextMatches,
   subtitleForRoute,
   titleForRoute,
@@ -37,12 +39,15 @@ const ALL_ROUTES: RouteId[] = Array.from(
     "workboard",
     "skills",
     "skill-workshop",
+    "plugins",
     // Hub tabs and settings subpages route without their own nav entry.
     "worktrees",
     "memory-import",
     "ai-agents",
     "model-setup",
     "lobsterdex",
+    "plugin-settings",
+    "skill-settings",
     ...visibleSettingsNavigationGroups(true).flatMap((group) => group.routes),
   ]),
 );
@@ -621,7 +626,6 @@ describe("SIDEBAR_NAV_ROUTES", () => {
       "systems",
       "activity",
       "meetings",
-      "plugins",
       "apps",
       "portals",
     ]);
@@ -633,6 +637,14 @@ describe("SIDEBAR_NAV_ROUTES", () => {
     expect(isPluginsHubRoute("skill-workshop")).toBe(true);
     expect(isPluginsHubRoute("skill-settings")).toBe(false);
     expect(isPluginsHubRoute("sessions")).toBe(false);
+  });
+
+  it("keeps plugin hub routes in the settings takeover", () => {
+    expect(isSettingsNavigationRoute("plugins")).toBe(true);
+    expect(isSettingsNavigationRoute("skills")).toBe(true);
+    expect(isSettingsNavigationRoute("skill-workshop")).toBe(true);
+    expect(settingsNavigationOwnerRoute("plugin-settings")).toBe("plugins");
+    expect(settingsNavigationOwnerRoute("skill-settings")).toBe("skills");
   });
 
   it("keeps the canonical settings navigation order", () => {
@@ -650,8 +662,9 @@ describe("SIDEBAR_NAV_ROUTES", () => {
       "cloud-workers",
       "agents",
       "model-providers",
-      "plugin-settings",
-      "skill-settings",
+      "plugins",
+      "skills",
+      "skill-workshop",
       "mcp",
       "memory",
       "automation",

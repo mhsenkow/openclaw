@@ -22,6 +22,12 @@
   padding-inline: var(--settings-header-inline-padding, var(--space-4));
 }
 
+.content-header.hub-page-header.plugins-hub-header--settings-nav {
+  grid-template-areas: "title actions";
+  align-items: start;
+  row-gap: 0;
+}
+
 .content-header.plugins-hub-header .hub-page-header__tabs {
   grid-area: tabs;
   justify-self: start;

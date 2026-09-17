@@ -103,9 +103,11 @@ export function restoreToastFromNavDrawer(host: HTMLElement): void {
 }
 
 export function visibleNavDrawerToggle(host: HTMLElement): HTMLElement | undefined {
-  return [...host.querySelectorAll<HTMLElement>(".topbar-nav-toggle, .chat-pane__nav-toggle")].find(
-    (candidate) => candidate.checkVisibility(),
-  );
+  return [
+    ...host.querySelectorAll<HTMLElement>(
+      ".sidebar-rail__nav-toggle, .topbar-nav-toggle, .chat-pane__nav-toggle",
+    ),
+  ].find((candidate) => candidate.checkVisibility());
 }
 
 export function navigationSurfaceIsHidden(params: {
