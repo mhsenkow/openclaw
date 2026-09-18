@@ -252,15 +252,15 @@ describe("ModelProvidersPage agent scope", () => {
     expect(link?.href).toBe("https://docs.openclaw.ai/concepts/model-providers");
   });
 
-  it("opens model setup from the Model setup action", async () => {
+  it("opens model setup from the Connect provider action", async () => {
     const { context } = createHarness("main");
     const page = appendPage(context);
-    await page.updateComplete;
+    await waitForFast(() =>
+      expect(page.querySelector<HTMLButtonElement>("[data-models-connect]")?.disabled).toBe(false),
+    );
 
-    const action = [
-      ...page.querySelectorAll<HTMLButtonElement>(".page-header-actions button"),
-    ].find((button) => button.textContent?.includes("Model setup"));
-    expect(action?.querySelector("svg")).not.toBeNull();
+    const action = page.querySelector<HTMLButtonElement>("[data-models-connect]");
+    expect(action?.textContent).toContain("Connect provider");
     action?.click();
     expect(context.navigate).toHaveBeenCalledWith("model-setup");
   });

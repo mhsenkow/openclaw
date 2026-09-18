@@ -34,5 +34,6 @@ export function modelCatalogRowToEntry(
     ...(row.statusReason ? { statusReason: row.statusReason } : {}),
     ...(row.replaces ? { replaces: [...row.replaces] } : {}),
     ...(row.replacedBy ? { replacedBy: row.replacedBy } : {}),
+    ...(row.localModel ? { localModel: { ...row.localModel } } : {}),
   };
 }

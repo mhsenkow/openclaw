@@ -25,6 +25,9 @@ function createDeps(
     async collectLocalAudioAccelerationFindings() {
       return [];
     },
+    async collectLocalProviderReachabilityFindings() {
+      return [];
+    },
     async collectGatewayHealthFindings() {
       return [];
     },

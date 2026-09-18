@@ -62,6 +62,7 @@ export function registerModelsCli(program: Command) {
     .option("--refresh", "Refresh provider discovery before listing", false)
     .option("--all", "Show full model catalog", false)
     .option("--local", "Filter to local models", false)
+    .option("--resident", "Filter to local models reported as loaded/warm", false)
     .option("--provider <id>", "Filter by provider id")
     .option("--agent <id>", "Agent id to inspect (overrides OPENCLAW_AGENT_DIR)")
     .option("--json", "Output JSON", false)
@@ -73,6 +74,28 @@ export function registerModelsCli(program: Command) {
           {
             ...opts,
             json: hasJsonOutput(opts),
+            agent: resolveModelAgentOption(command, opts),
+          },
+          defaultRuntime,
+        );
+      });
+    });
+
+  models
+    .command("local")
+    .description("List local model runtimes with reachability and resident state")
+    .option("--refresh", "Refresh provider discovery before listing", false)
+    .option("--agent <id>", "Agent id to inspect (overrides OPENCLAW_AGENT_DIR)")
+    .option("--json", "Output JSON", false)
+    .option("--plain", "Plain line output", false)
+    .action(async (opts, command) => {
+      await withModelsRuntime(async ({ defaultRuntime, resolveModelAgentOption }) => {
+        const { modelsLocalCommand } = await import("../commands/models/local.js");
+        await modelsLocalCommand(
+          {
+            refresh: Boolean(opts.refresh),
+            json: hasJsonOutput(opts),
+            plain: Boolean(opts.plain),
             agent: resolveModelAgentOption(command, opts),
           },
           defaultRuntime,

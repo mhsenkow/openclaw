@@ -90,6 +90,9 @@ export type CoreHealthCheckDeps = {
     ctx: HealthCheckContext,
   ) => Promise<readonly HealthFinding[]>;
   readonly collectLocalAudioAccelerationFindings: () => Promise<readonly HealthFinding[]>;
+  readonly collectLocalProviderReachabilityFindings: (
+    cfg: OpenClawConfig,
+  ) => Promise<readonly HealthFinding[]>;
   readonly collectGatewayHealthFindings: (
     ctx: HealthCheckContext,
   ) => Promise<readonly HealthFinding[]>;
@@ -156,6 +159,13 @@ async function collectLocalAudioAccelerationFindingsWithRuntime(): Promise<
 > {
   const runtime = await loadDoctorCoreChecksRuntimeModule();
   return runtime.collectLocalAudioAccelerationFindings();
+}
+
+async function collectLocalProviderReachabilityFindingsWithRuntime(
+  cfg: OpenClawConfig,
+): Promise<readonly HealthFinding[]> {
+  const runtime = await loadDoctorCoreChecksRuntimeModule();
+  return runtime.collectLocalProviderReachabilityFindings(cfg);
 }
 
 async function collectGatewayHealthFindingsWithRuntime(
@@ -250,6 +260,7 @@ const defaultCoreHealthCheckDeps: CoreHealthCheckDeps = {
   collectRuntimeToolSchemaFindings: collectRuntimeToolSchemaFindingsWithRuntime,
   collectProviderCatalogProjectionFindings: collectProviderCatalogProjectionFindingsWithRuntime,
   collectLocalAudioAccelerationFindings: collectLocalAudioAccelerationFindingsWithRuntime,
+  collectLocalProviderReachabilityFindings: collectLocalProviderReachabilityFindingsWithRuntime,
   collectGatewayHealthFindings: collectGatewayHealthFindingsWithRuntime,
   collectGatewayDaemonFindings: collectGatewayDaemonFindingsWithRuntime,
   listGatewayCronJobs: listGatewayCronJobsWithRuntime,
@@ -1510,6 +1521,15 @@ function createConvertedWorkflowChecks(deps: CoreHealthCheckDeps): readonly Doct
       source: "doctor",
       async detect() {
         return await deps.collectLocalAudioAccelerationFindings();
+      },
+    },
+    {
+      id: "core/doctor/local-provider-reachability",
+      kind: "core",
+      description: "Configured local model providers are reachable without auto-starting them.",
+      source: "doctor",
+      async detect(ctx) {
+        return await deps.collectLocalProviderReachabilityFindings(ctx.cfg);
       },
     },
     createRuntimeToolSchemaCheck(deps),

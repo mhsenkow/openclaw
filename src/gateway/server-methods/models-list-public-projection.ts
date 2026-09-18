@@ -12,6 +12,7 @@ type ModelsListEntry = Pick<
   | "alias"
   | "contextTokens"
   | "local"
+  | "localModel"
   | "contextWindow"
   | "contextWindowDefault"
   | "contextWindows"
@@ -32,6 +33,9 @@ export function buildPublicModelProjection(
   const contextTokens = options.includeDetails
     ? resolvePositiveSafeInteger(entry.contextTokens)
     : undefined;
+  const localFromFacts = entry.localModel !== undefined ? true : undefined;
+  const localFromBaseUrl = entry.baseUrl ? isLocalBaseUrl(entry.baseUrl) : undefined;
+  const local = localFromFacts ?? localFromBaseUrl;
   return {
     id: entry.id,
     name: entry.name,
@@ -39,7 +43,8 @@ export function buildPublicModelProjection(
     ...(entry.alias ? { alias: entry.alias } : {}),
     ...(contextWindow ? { contextWindow } : {}),
     ...(contextTokens ? { contextTokens } : {}),
-    ...(options.includeDetails && entry.baseUrl ? { local: isLocalBaseUrl(entry.baseUrl) } : {}),
+    ...(local !== undefined ? { local } : {}),
+    ...(options.includeDetails && entry.localModel ? { localModel: { ...entry.localModel } } : {}),
     ...(options.includeDetails && entry.input?.length ? { input: entry.input } : {}),
     ...(entry.contextWindows ? { contextWindows: entry.contextWindows } : {}),
     ...(entry.contextWindowDefault ? { contextWindowDefault: entry.contextWindowDefault } : {}),

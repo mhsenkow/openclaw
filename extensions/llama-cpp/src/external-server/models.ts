@@ -119,6 +119,7 @@ export function mapLlamaServerModel(
     return null;
   }
   const contextWindow = resolveContextWindow(props);
+  const status = normalizeStatus(row.status?.value);
   return {
     config: {
       id,
@@ -130,8 +131,12 @@ export function mapLlamaServerModel(
       contextTokens: contextWindow,
       maxTokens: resolveMaxTokens(props, contextWindow),
       compat: buildCompat(props),
+      localModel: {
+        contextLengthReported: contextWindow,
+        ...(status === "loaded" ? { resident: true as const } : {}),
+      },
     },
-    status: normalizeStatus(row.status?.value),
+    status,
     failed: row.status?.failed === true,
   };
 }

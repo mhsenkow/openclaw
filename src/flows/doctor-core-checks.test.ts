@@ -113,6 +113,9 @@ function createDeps(overrides: Partial<CoreHealthCheckDeps> = {}): CoreHealthChe
     async collectLocalAudioAccelerationFindings() {
       return [];
     },
+    async collectLocalProviderReachabilityFindings() {
+      return [];
+    },
     async collectGatewayHealthFindings() {
       return [];
     },

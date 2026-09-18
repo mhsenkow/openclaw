@@ -1,4 +1,6 @@
 // Shared data shapes for model-list and model-status output.
+import type { LocalModelFacts } from "../../config/types.models.js";
+
 /** Render-ready model-list row. */
 export type ModelRow = {
   key: string;
@@ -8,6 +10,8 @@ export type ModelRow = {
   contextTokens?: number;
   local: boolean | null;
   available: boolean | null;
+  /** Provider-reported local runtime facts when includeDetails projected them. */
+  localModel?: LocalModelFacts;
   tags: string[];
 };
 

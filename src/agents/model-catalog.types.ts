@@ -4,9 +4,16 @@
  * and filters agree on stable model metadata.
  */
 import type { ModelCatalogStatus } from "@openclaw/model-catalog-core/model-catalog-types";
-import type { ModelApi, ModelCompatConfig, ModelMediaInputConfig } from "../config/types.models.js";
+import type {
+  LocalModelFacts,
+  ModelApi,
+  ModelCompatConfig,
+  ModelMediaInputConfig,
+} from "../config/types.models.js";
 import type { ThinkingLevelMap } from "../llm/types.js";
 import type { ProviderCatalogOutcome } from "../plugins/provider-catalog-outcome.js";
+
+export type { LocalModelFacts };
 
 /** Input modalities a catalog entry can advertise. */
 export type ModelInputType = "text" | "image" | "audio" | "video" | "document";
@@ -49,6 +56,8 @@ export type ModelCatalogEntry = {
   statusReason?: string;
   replaces?: string[];
   replacedBy?: string;
+  /** Optional provider-reported local runtime facts; never invent values. */
+  localModel?: LocalModelFacts;
 };
 
 /** Logical catalog rows plus the physical variants used for route selection. */

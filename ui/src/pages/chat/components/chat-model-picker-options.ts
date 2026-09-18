@@ -29,6 +29,16 @@ export type ChatModelPickerOption = {
   provider: string;
   supportsTools?: boolean;
   local?: boolean;
+  /** Provider-reported local facts; absent means unknown. */
+  localModel?: {
+    sizeBytes?: number;
+    parameterSize?: string;
+    quantization?: string;
+    family?: string;
+    resident?: boolean;
+    contextLengthReported?: number;
+    residentVramBytes?: number;
+  };
   reasoning?: boolean;
   input?: ReadonlyArray<"text" | "image" | "audio" | "video" | "document">;
   tags?: readonly string[];
@@ -105,6 +115,105 @@ export function formatModelLabel(option: ChatModelPickerOption): string {
     }
   }
   return option.label;
+}
+
+/** Parse provider-reported sizes like "7B" / "70.6B" into a comparable number of billions. */
+export function parseParameterSizeBillions(value: string | undefined): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const match = /^([\d.]+)\s*([bmk])?\b/i.exec(value.trim());
+  if (!match) {
+    return undefined;
+  }
+  const amount = Number(match[1]);
+  if (!Number.isFinite(amount)) {
+    return undefined;
+  }
+  const unit = (match[2] ?? "b").toLowerCase();
+  if (unit === "k") {
+    return amount / 1000;
+  }
+  if (unit === "m") {
+    return amount / 1_000_000;
+  }
+  return amount;
+}
+
+export function formatLocalModelSizeChip(option: ChatModelPickerOption): string {
+  const parameterSize = option.localModel?.parameterSize?.trim();
+  const quantization = option.localModel?.quantization?.trim();
+  if (parameterSize && quantization) {
+    return `${parameterSize} ${quantization}`;
+  }
+  return parameterSize || quantization || "";
+}
+
+function compareChatModelPickerOptions(
+  left: ChatModelPickerOption,
+  right: ChatModelPickerOption,
+): number {
+  if (left.isDefault !== right.isDefault) {
+    return left.isDefault ? -1 : 1;
+  }
+  const leftResident = left.localModel?.resident === true;
+  const rightResident = right.localModel?.resident === true;
+  if (leftResident !== rightResident) {
+    return leftResident ? -1 : 1;
+  }
+  const leftSize =
+    parseParameterSizeBillions(left.localModel?.parameterSize) ??
+    (typeof left.localModel?.sizeBytes === "number"
+      ? left.localModel.sizeBytes
+      : Number.POSITIVE_INFINITY);
+  const rightSize =
+    parseParameterSizeBillions(right.localModel?.parameterSize) ??
+    (typeof right.localModel?.sizeBytes === "number"
+      ? right.localModel.sizeBytes
+      : Number.POSITIVE_INFINITY);
+  if (leftSize !== rightSize) {
+    return leftSize - rightSize;
+  }
+  return left.label.localeCompare(right.label);
+}
+
+/** Local providers first; within each provider, warm then smaller models. */
+export function orderChatModelPickerProviderGroups(
+  modelOptions: readonly ChatModelPickerOption[],
+  defaultProvider?: string,
+): Array<[string, ChatModelPickerOption[]]> {
+  const providerGroups = new Map<string, ChatModelPickerOption[]>();
+  for (const option of modelOptions) {
+    const existing = providerGroups.get(option.provider);
+    if (existing) {
+      existing.push(option);
+    } else {
+      providerGroups.set(option.provider, [option]);
+    }
+  }
+  for (const options of providerGroups.values()) {
+    options.sort(compareChatModelPickerOptions);
+  }
+  const groups = [...providerGroups];
+  const isLocalGroup = ([, options]: [string, ChatModelPickerOption[]]) =>
+    options.some((option) => option.local === true);
+  const local = groups
+    .filter(isLocalGroup)
+    .toSorted(([left], [right]) => left.localeCompare(right));
+  const remote = groups
+    .filter((group) => !isLocalGroup(group))
+    .toSorted(([left], [right]) => left.localeCompare(right));
+  const ordered = [...local, ...remote];
+  const defaultProviderIndex = defaultProvider
+    ? ordered.findIndex(([provider]) => provider === defaultProvider)
+    : -1;
+  if (defaultProviderIndex > 0) {
+    const [defaultGroup] = ordered.splice(defaultProviderIndex, 1);
+    if (defaultGroup) {
+      ordered.unshift(defaultGroup);
+    }
+  }
+  return ordered;
 }
 
 export function renderChatModelProviderIcon(provider: string) {
@@ -190,6 +299,20 @@ export function renderChatModelPickerTag(params: {
     ${
       params.entry.isDefault
         ? html`<span class="chat-model-picker-tag__badge">${t("chat.modelControls.default")}</span>`
+        : nothing
+    }
+    ${
+      params.entry.localModel?.resident
+        ? html`<span class="chat-model-picker-tag__badge chat-model-picker-tag__badge--warm"
+            >${t("chat.modelControls.warm")}</span
+          >`
+        : nothing
+    }
+    ${
+      formatLocalModelSizeChip(params.entry)
+        ? html`<span class="chat-model-picker-tag__badge chat-model-picker-tag__badge--size"
+            >${formatLocalModelSizeChip(params.entry)}</span
+          >`
         : nothing
     }
     ${

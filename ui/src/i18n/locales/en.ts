@@ -2545,6 +2545,10 @@ export const en: TranslationMap & {
       ollamaLabel: "Ollama",
       ollamaHint: "Connect to the Ollama service on this Gateway and prepare a tools-capable model",
       llamaCppLabel: "llama.cpp",
+      noneAdvertised:
+        "This Gateway does not advertise any local model runtimes. Update the Gateway or install a local provider plugin, then check again.",
+      noneAvailable:
+        "No local model runtimes are available to set up right now. Check again after starting a local server.",
       providerNotReady:
         "{provider} did not expose a usable local model. Review the setup result, then retry.",
     },

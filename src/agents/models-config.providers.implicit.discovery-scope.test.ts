@@ -46,12 +46,19 @@ vi.mock("../plugins/provider-discovery.js", () => ({
   resolveRuntimePluginDiscoveryProviders: mocks.resolveRuntimePluginDiscoveryProviders,
   runProviderCatalog: mocks.runProviderCatalog,
   runProviderStaticCatalog: mocks.runProviderStaticCatalog,
-  groupPluginDiscoveryProvidersByOrder: (providers: ProviderPlugin[]) => ({
-    simple: providers,
-    profile: [],
-    paired: [],
-    late: [],
-  }),
+  groupPluginDiscoveryProvidersByOrder: (providers: ProviderPlugin[]) => {
+    const grouped = {
+      simple: [] as ProviderPlugin[],
+      profile: [] as ProviderPlugin[],
+      paired: [] as ProviderPlugin[],
+      late: [] as ProviderPlugin[],
+    };
+    for (const provider of providers) {
+      const order = provider.catalog?.order ?? provider.staticCatalog?.order ?? "late";
+      grouped[order].push(provider);
+    }
+    return grouped;
+  },
   normalizePluginDiscoveryResult: ({
     provider,
     result,
@@ -616,6 +623,127 @@ describe("resolveImplicitProviders startup discovery scope", () => {
     });
 
     expect(outcomes).toEqual([{ provider: "openai", status: "unavailable" }]);
+  });
+
+  it("runs independent same-phase provider catalogs with bounded concurrency", async () => {
+    const providers = ["alpha", "bravo", "charlie", "delta", "echo"].map((id) =>
+      createProvider(id),
+    );
+    mocks.resolveRuntimePluginDiscoveryProviders.mockResolvedValue(providers);
+
+    let active = 0;
+    let peak = 0;
+    let resolveGate: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      resolveGate = resolve;
+    });
+    let resolveReachedLimit: () => void = () => {};
+    const reachedLimit = new Promise<void>((resolve) => {
+      resolveReachedLimit = resolve;
+    });
+
+    mocks.runProviderCatalog.mockImplementation(async (params) => {
+      active += 1;
+      peak = Math.max(peak, active);
+      if (peak >= 4) {
+        resolveReachedLimit();
+      }
+      await gate;
+      active -= 1;
+      return {
+        provider: {
+          baseUrl: `https://${params.provider.id}.example.test/v1`,
+          models: [createTextModel(`${params.provider.id}-live`, `${params.provider.id} live`)],
+        },
+      };
+    });
+
+    const resultPromise = resolveImplicitProviders({
+      agentDir: state.agentDir(),
+      config: {},
+      env: state.env,
+      explicitProviders: {},
+      providerDiscoveryProviderIds: providers.map((provider) => provider.id),
+      pluginMetadataSnapshot: createPluginMetadataSnapshotFixture({
+        plugins: providers.map((provider) =>
+          createPluginManifestRecordFixture({
+            id: provider.id,
+            providers: [provider.id],
+          }),
+        ),
+      }),
+    });
+
+    await reachedLimit;
+    expect(peak).toBe(4);
+    expect(active).toBe(4);
+    resolveGate();
+
+    const discovered = await resultPromise;
+    expect(Object.keys(discovered ?? {}).sort()).toEqual(
+      providers.map((provider) => provider.id).sort(),
+    );
+    expect(peak).toBe(4);
+  });
+
+  it("keeps discovery phases ordered while overlapping work inside a phase", async () => {
+    const simpleA = createProvider("simple-a");
+    const simpleB = createProvider("simple-b");
+    const profile = {
+      ...createProvider("profile-a"),
+      catalog: { order: "profile" as const, run: async () => null },
+    };
+    mocks.resolveRuntimePluginDiscoveryProviders.mockResolvedValue([simpleA, simpleB, profile]);
+
+    const started: string[] = [];
+    let resolveSimpleGate: () => void = () => {};
+    const simpleGate = new Promise<void>((resolve) => {
+      resolveSimpleGate = resolve;
+    });
+    let resolveBothSimpleStarted: () => void = () => {};
+    const bothSimpleStarted = new Promise<void>((resolve) => {
+      resolveBothSimpleStarted = resolve;
+    });
+
+    mocks.runProviderCatalog.mockImplementation(async (params) => {
+      started.push(params.provider.id);
+      if (params.provider.id.startsWith("simple-")) {
+        if (started.filter((id) => id.startsWith("simple-")).length === 2) {
+          resolveBothSimpleStarted();
+        }
+        await simpleGate;
+      }
+      return {
+        provider: {
+          baseUrl: `https://${params.provider.id}.example.test/v1`,
+          models: [createTextModel(`${params.provider.id}-live`, `${params.provider.id} live`)],
+        },
+      };
+    });
+
+    const resultPromise = resolveImplicitProviders({
+      agentDir: state.agentDir(),
+      config: {},
+      env: state.env,
+      explicitProviders: {},
+      providerDiscoveryProviderIds: ["simple-a", "simple-b", "profile-a"],
+      pluginMetadataSnapshot: createPluginMetadataSnapshotFixture({
+        plugins: [
+          createPluginManifestRecordFixture({ id: "simple-a", providers: ["simple-a"] }),
+          createPluginManifestRecordFixture({ id: "simple-b", providers: ["simple-b"] }),
+          createPluginManifestRecordFixture({ id: "profile-a", providers: ["profile-a"] }),
+        ],
+      }),
+    });
+
+    await bothSimpleStarted;
+    expect(started.sort()).toEqual(["simple-a", "simple-b"]);
+    expect(started).not.toContain("profile-a");
+    resolveSimpleGate();
+
+    await resultPromise;
+    expect(started.indexOf("profile-a")).toBeGreaterThan(started.indexOf("simple-a"));
+    expect(started.indexOf("profile-a")).toBeGreaterThan(started.indexOf("simple-b"));
   });
 
   it.each(["timeout", "secret-unavailable"] as const)(

@@ -134,8 +134,13 @@ function trimModelCatalogCache(client: ModelCatalogClient, cache: ModelCatalogCa
 }
 
 export function modelCatalogParams(options: ModelsListParams): ModelsListParams {
-  const { agentId, view = "configured", ...params } = options;
-  return { view, ...params, ...(agentId === undefined ? {} : { agentId: agentId.trim() }) };
+  const { agentId, view = "configured", includeDetails = true, ...params } = options;
+  return {
+    ...params,
+    view,
+    includeDetails,
+    ...(agentId === undefined ? {} : { agentId: agentId.trim() }),
+  };
 }
 
 export function modelCatalogKey(params: ModelsListParams): string {

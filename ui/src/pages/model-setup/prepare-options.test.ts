@@ -2,13 +2,14 @@ import { describe, expect, it } from "vitest";
 import type { SystemAgentSetupDetectResult } from "../../api/types.ts";
 import {
   findPreparedModelCandidate,
+  isLocalRuntimeCandidate,
   listModelSetupPrepareOptions,
   providerAutoSetupKind,
 } from "./prepare-options.ts";
 
 function detection(
   candidates: SystemAgentSetupDetectResult["candidates"],
-  prepareOptions: NonNullable<SystemAgentSetupDetectResult["prepareOptions"]>,
+  prepareOptions: SystemAgentSetupDetectResult["prepareOptions"],
 ): SystemAgentSetupDetectResult {
   return {
     candidates,
@@ -88,5 +89,45 @@ describe("model setup prepare options", () => {
 
     expect(listModelSetupPrepareOptions(result)).toHaveLength(1);
     expect(findPreparedModelCandidate(result, "lmstudio")).toBeUndefined();
+  });
+
+  it("does not invent a legacy Ollama/llama.cpp list when Gateway omits prepareOptions", () => {
+    const result = detection([], undefined);
+    expect(listModelSetupPrepareOptions(result)).toEqual([]);
+    expect(result.prepareOptions).toBeUndefined();
+  });
+
+  it("returns an empty list when Gateway advertises no prepare options", () => {
+    expect(listModelSetupPrepareOptions(detection([], []))).toEqual([]);
+  });
+
+  it("recognizes Gateway-advertised local candidates", () => {
+    const prepareOptions = [{ id: "ollama", brandId: "ollama", label: "Ollama" }];
+    expect(
+      isLocalRuntimeCandidate(
+        {
+          kind: "provider-auto:ollama",
+          brandId: "ollama",
+          label: "Ollama",
+          detail: "available locally",
+          modelRef: "ollama/qwen3:8b",
+          recommended: false,
+        },
+        prepareOptions,
+      ),
+    ).toBe(true);
+    expect(
+      isLocalRuntimeCandidate(
+        {
+          kind: "codex-cli",
+          brandId: "openai",
+          label: "Codex CLI",
+          detail: "Signed in locally",
+          modelRef: "openai/gpt-5",
+          recommended: true,
+        },
+        prepareOptions,
+      ),
+    ).toBe(false);
   });
 });

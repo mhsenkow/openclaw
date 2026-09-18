@@ -4,6 +4,7 @@ import type { ModelDefinitionConfig, ModelProviderConfig } from "../config/types
 import {
   groupPluginDiscoveryProvidersByOrder,
   normalizePluginDiscoveryResult,
+  prepareProviderStaticCatalog,
   runProviderCatalog,
   runProviderStaticCatalog,
 } from "./provider-discovery.js";
@@ -554,5 +555,72 @@ describe("runProviderStaticCatalog", () => {
     });
     expect(seenContexts[0]).not.toHaveProperty("agentDir");
     expect(seenContexts[0]).not.toHaveProperty("workspaceDir");
+  });
+});
+
+describe("prepareProviderStaticCatalog", () => {
+  it("runs same-phase static catalogs with bounded concurrency and keeps phases ordered", async () => {
+    let active = 0;
+    let peak = 0;
+    const started: string[] = [];
+    let resolveSimpleGate: () => void = () => {};
+    const simpleGate = new Promise<void>((resolve) => {
+      resolveSimpleGate = resolve;
+    });
+    let resolveReachedLimit: () => void = () => {};
+    const reachedLimit = new Promise<void>((resolve) => {
+      resolveReachedLimit = resolve;
+    });
+
+    const makeStatic = (id: string, order: ProviderCatalogOrder): ProviderPlugin => ({
+      id,
+      label: id,
+      auth: [],
+      staticCatalog: {
+        order,
+        run: async () => {
+          started.push(id);
+          if (order === "simple") {
+            active += 1;
+            peak = Math.max(peak, active);
+            if (peak >= 4) {
+              resolveReachedLimit();
+            }
+            await simpleGate;
+            active -= 1;
+          }
+          return {
+            provider: makeModelProviderConfig({ baseUrl: `https://${id}.example/v1` }),
+          };
+        },
+      },
+    });
+
+    const providers = [
+      makeStatic("s1", "simple"),
+      makeStatic("s2", "simple"),
+      makeStatic("s3", "simple"),
+      makeStatic("s4", "simple"),
+      makeStatic("s5", "simple"),
+      makeStatic("late1", "late"),
+    ];
+
+    const preparedPromise = prepareProviderStaticCatalog({ providers });
+    await reachedLimit;
+    expect(peak).toBe(4);
+    expect(started).not.toContain("late1");
+    resolveSimpleGate();
+
+    const prepared = await preparedPromise;
+    expect(prepared.entries.map((entry) => entry.provider.id)).toEqual([
+      "s1",
+      "s2",
+      "s3",
+      "s4",
+      "s5",
+      "late1",
+    ]);
+    expect(started.indexOf("late1")).toBeGreaterThan(started.indexOf("s1"));
+    expect(peak).toBe(4);
   });
 });

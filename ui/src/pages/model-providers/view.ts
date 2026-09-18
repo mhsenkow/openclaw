@@ -4,7 +4,7 @@ import type { GatewayBrowserClient } from "../../api/gateway.ts";
 import type { FastMode, ModelAuthStatusResult, ModelsProbeResult } from "../../api/types.ts";
 import { titleForRoute } from "../../app-navigation.ts";
 import { icons } from "../../components/icons.ts";
-import { renderProviderBrandIcon } from "../../components/provider-icon.ts";
+import { renderProviderBrandIcon, providerDisplayLabel } from "../../components/provider-icon.ts";
 import { renderProviderUsageDetails } from "../../components/provider-usage.ts";
 import {
   renderLearnMoreLink,
@@ -566,6 +566,19 @@ export function renderModelProviders(props: ModelProvidersViewProps) {
   `;
   const needsModelSetup =
     !props.loading && !props.configuredModels.some((model) => model.available !== false);
+  const localModels = props.configuredModels
+    .filter((model) => model.local === true)
+    .toSorted((left, right) => {
+      const leftResident = left.localModel?.resident === true ? 0 : 1;
+      const rightResident = right.localModel?.resident === true ? 0 : 1;
+      if (leftResident !== rightResident) {
+        return leftResident - rightResident;
+      }
+      return left.name.localeCompare(right.name);
+    });
+  const localResidentCount = localModels.filter(
+    (model) => model.localModel?.resident === true,
+  ).length;
   return renderSettingsPage(html`
     ${needsModelSetup ? renderModelReadiness(props) : nothing}
     <div id=${MODEL_SETTINGS_TARGET_IDS.behavior}>
@@ -595,6 +608,54 @@ export function renderModelProviders(props: ModelProvidersViewProps) {
         onCatalogRetry: props.onCatalogRetry,
       })}
     </div>
+    ${
+      !props.loading && localModels.length > 0
+        ? renderSettingsSection(
+            {
+              title: t("modelProviders.localModelsTitle"),
+              count: localModels.length,
+              description: t("modelProviders.localModelsSubtitle"),
+            },
+            html`
+              <div class="model-providers__local-list">
+                <p class="settings-row__desc">
+                  ${
+                    localResidentCount > 0
+                      ? t("modelProviders.localModelResidentCount", {
+                          resident: String(localResidentCount),
+                          count: String(localModels.length),
+                        })
+                      : t("modelProviders.localModelCount", {
+                          count: String(localModels.length),
+                        })
+                  }
+                </p>
+                ${localModels.map(
+                  (model) => html`
+                    <div class="settings-row model-providers__local-row">
+                      <div class="settings-row__text">
+                        <span class="settings-row__label"
+                          >${renderProviderBrandIcon(model.provider)} ${model.name}</span
+                        >
+                        <span class="settings-row__desc"
+                          >${providerDisplayLabel(model.provider)}</span
+                        >
+                      </div>
+                      ${
+                        model.localModel?.resident
+                          ? html`<span class="model-providers__local-warm"
+                              >${t("modelProviders.localModelWarm")}</span
+                            >`
+                          : nothing
+                      }
+                    </div>
+                  `,
+                )}
+              </div>
+            `,
+          )
+        : nothing
+    }
     ${
       props.loading
         ? renderSettingsGroup(renderSettingsLoadingSkeleton())
@@ -646,7 +707,6 @@ export function renderModelProviders(props: ModelProvidersViewProps) {
 export function renderModelProvidersPageShell(props: {
   onOpenModelSetup: () => void;
   body: TemplateResult;
-  onConnect: () => void;
   connectDisabled: boolean;
   login: TemplateResult;
   loginMessage?: ModelProviderRowMessage;
@@ -658,15 +718,12 @@ export function renderModelProvidersPageShell(props: {
       ${renderLearnMoreLink("https://docs.openclaw.ai/concepts/model-providers")}`,
       actions: html`
         <button
-          class="btn"
+          class="btn primary"
           data-models-connect
           ?disabled=${props.connectDisabled}
-          @click=${props.onConnect}
+          @click=${props.onOpenModelSetup}
         >
           ${t("modelProviders.login.action")}
-        </button>
-        <button class="btn btn--ghost" @click=${props.onOpenModelSetup}>
-          ${icons.settings}<span>${t("modelProviders.configureModels")}</span>
         </button>
       `,
     })}

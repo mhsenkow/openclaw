@@ -58,6 +58,18 @@ describe("renderModelSetup", () => {
     expect(text(container)).toContain("Run a model locally");
     expect(text(container)).toContain("LM Studio");
     expect(text(container)).toContain("Connect with an API key or token");
+    const sectionTitles = [...container.querySelectorAll(".settings-section__header h2")].map(
+      (heading) => heading.textContent?.trim(),
+    );
+    expect(sectionTitles.indexOf("Run a model locally")).toBeLessThan(
+      sectionTitles.indexOf("Found on this Gateway"),
+    );
+    expect(sectionTitles.indexOf("Run a model locally")).toBeLessThan(
+      sectionTitles.indexOf("Set up and verify a model"),
+    );
+    expect(sectionTitles.indexOf("Run a model locally")).toBeLessThan(
+      sectionTitles.indexOf("Connect with an API key or token"),
+    );
     expect(
       container.querySelector('[data-manual-provider="openai"][data-selected]'),
     ).not.toBeNull();
@@ -83,6 +95,56 @@ describe("renderModelSetup", () => {
         ?.textContent,
     ).toContain("O");
     expect(container.querySelectorAll("img")).toHaveLength(0);
+  });
+
+  it("promotes already-detected local candidates above cloud detections", () => {
+    const container = mount(
+      props({
+        page: {
+          phase: "ready",
+          result: {
+            ...detected,
+            candidates: [
+              {
+                kind: "codex-cli",
+                brandId: "openai",
+                label: "Codex CLI",
+                detail: "Signed in locally",
+                modelRef: "openai/gpt-5",
+                recommended: true,
+              },
+              {
+                kind: "provider-auto:ollama",
+                brandId: "ollama",
+                label: "Ollama",
+                detail: "available locally",
+                modelRef: "ollama/qwen3:8b",
+                recommended: false,
+              },
+            ],
+          },
+        },
+      }),
+    );
+    const kinds = [...container.querySelectorAll("[data-candidate-kind]")].map((row) =>
+      row.getAttribute("data-candidate-kind"),
+    );
+    expect(kinds[0]).toBe("provider-auto:ollama");
+    expect(kinds[1]).toBe("codex-cli");
+  });
+
+  it("says explicitly when Gateway omits local prepare options", () => {
+    const container = mount(
+      props({
+        page: {
+          phase: "ready",
+          result: { ...detected, prepareOptions: undefined },
+        },
+      }),
+    );
+    expect(container.querySelector('[data-prepare-empty="missing"]')).not.toBeNull();
+    expect(text(container)).toContain("does not advertise any local model runtimes");
+    expect(container.querySelector("[data-prepare-choice]")).toBeNull();
   });
 
   it.each(["logged in · ChatGPT account · alex@example.com", "logged in · API key (usage-billed)"])(

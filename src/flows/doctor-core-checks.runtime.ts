@@ -119,6 +119,29 @@ export async function collectLocalAudioAccelerationFindings(): Promise<readonly 
   ];
 }
 
+/** Warns when a configured local model provider endpoint is unreachable; does not start it. */
+export async function collectLocalProviderReachabilityFindings(
+  cfg: OpenClawConfig,
+): Promise<readonly HealthFinding[]> {
+  const { probeConfiguredLocalProviders } =
+    await import("../agents/local-provider-reachability.js");
+  const probes = await probeConfiguredLocalProviders(cfg);
+  return probes
+    .filter((probe) => probe.status === "unreachable")
+    .map((probe) => ({
+      checkId: "core/doctor/local-provider-reachability",
+      severity: "warning" as const,
+      source: "doctor" as const,
+      target: probe.provider,
+      path: `models.providers.${probe.provider}`,
+      message: `Configured local provider "${probe.provider}" at ${probe.baseUrl} is unreachable.${
+        probe.error ? ` Last error: ${probe.error}` : ""
+      }`,
+      requirement: "a reachable local model server",
+      fixHint: `Start it with: ${probe.startHint}. Doctor does not auto-start local model servers.`,
+    }));
+}
+
 export async function collectGatewayHealthFindings(
   ctx: Pick<HealthCheckContext, "cfg" | "configPath" | "env" | "allowExecSecretRefs">,
 ): Promise<readonly HealthFinding[]> {

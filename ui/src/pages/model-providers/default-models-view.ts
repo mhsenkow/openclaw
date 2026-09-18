@@ -51,6 +51,8 @@ type DefaultModelsViewProps = {
 const AUTOMATIC_UTILITY_VALUE = "__openclaw_automatic_utility__";
 const UTILITY_MODEL_PICKER_ID = "model-providers-utility-model";
 const UTILITY_MODEL_HELP_ID = "model-providers-utility-help";
+const PRIMARY_MODEL_HELP_ID = "model-providers-primary-help";
+const FALLBACK_MODEL_HELP_ID = "model-providers-fallback-help";
 const THINKING_HELP_ID = "model-providers-thinking-help";
 const FAST_MODE_HELP_ID = "model-providers-fast-mode-help";
 
@@ -64,16 +66,23 @@ function modelOptions(
   authProviders: ReadonlyMap<string, ModelAuthStatusProvider>,
 ): ModelPickerOption[] {
   const seen = new Set<string>();
-  const options: ModelPickerOption[] = [];
+  const options: Array<ModelPickerOption & { local?: boolean }> = [];
   for (const model of models) {
     const ref = modelCatalogRef(model);
     if (seen.has(ref)) {
       continue;
     }
     seen.add(ref);
-    options.push(modelOption(model, authProviders));
+    options.push({ ...modelOption(model, authProviders), local: model.local === true });
   }
-  return options.toSorted((a, b) => a.label.localeCompare(b.label));
+  return options
+    .toSorted((a, b) => {
+      if (a.local !== b.local) {
+        return a.local ? -1 : 1;
+      }
+      return a.label.localeCompare(b.label);
+    })
+    .map(({ local: _local, ...option }) => option);
 }
 
 function modelOption(
@@ -221,7 +230,12 @@ export function renderDefaultModels(props: DefaultModelsViewProps) {
           : nothing
       }
       ${renderSettingsRow({
-        title: t("modelProviders.defaults.primary"),
+        title: renderHelpTitle({
+          title: t("modelProviders.defaults.primary"),
+          label: t("modelProviders.defaults.primaryHelpLabel"),
+          triggerId: PRIMARY_MODEL_HELP_ID,
+          body: html`<p>${t("modelProviders.defaults.primaryHelp")}</p>`,
+        }),
         control: renderModelPicker({
           label: t("modelProviders.defaults.primary"),
           value: props.selection.primary,
@@ -276,7 +290,12 @@ export function renderDefaultModels(props: DefaultModelsViewProps) {
         }),
       })}
       ${renderSettingsRow({
-        title: t("modelProviders.defaults.fallback"),
+        title: renderHelpTitle({
+          title: t("modelProviders.defaults.fallback"),
+          label: t("modelProviders.defaults.fallbackHelpLabel"),
+          triggerId: FALLBACK_MODEL_HELP_ID,
+          body: html`<p>${t("modelProviders.defaults.fallbackHelp")}</p>`,
+        }),
         control: renderModelPicker({
           label: t("modelProviders.defaults.fallback"),
           value: fallback,

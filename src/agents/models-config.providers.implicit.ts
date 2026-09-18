@@ -27,6 +27,7 @@ import { matchesProviderPluginRef } from "../plugins/provider-registry-shared.js
 import { prepareProviderExternalAuthWithPlugin } from "../plugins/provider-runtime.js";
 import { resolveManifestSyntheticAuthProviderRefState } from "../plugins/synthetic-auth.runtime.js";
 import { resolveNonEnvSecretRefApiKeyMarker } from "../secrets/provider-credential-values.js";
+import { runTasksWithConcurrency } from "../utils/run-with-concurrency.js";
 import { ensureAuthProfileStore } from "./auth-profiles/store-runtime.js";
 import type { AuthProfileStore } from "./auth-profiles/types.js";
 import { isNonSecretApiKeyMarker } from "./model-auth-markers.js";
@@ -67,6 +68,8 @@ const PROVIDER_IMPLICIT_MERGERS: Partial<
 };
 
 const PLUGIN_DISCOVERY_ORDERS = ["simple", "profile", "paired", "late"] as const;
+/** Independent catalog hooks within one phase; keep phases themselves ordered. */
+const PROVIDER_DISCOVERY_PHASE_CONCURRENCY = 4;
 
 type ImplicitProviderParams = {
   agentDir: string;
@@ -229,6 +232,17 @@ async function resolvePluginImplicitProviders(
     const pluginId = provider.pluginId ?? normalizeProviderId(provider.id);
     catalogCountsByPluginId.set(pluginId, (catalogCountsByPluginId.get(pluginId) ?? 0) + 1);
   }
+  type PhaseDiscoveryJob = {
+    provider: (typeof byOrder)[typeof order][number];
+    includeProvider: (providerId: string) => boolean;
+    providerIds: string[] | undefined;
+    catalogConfig: ReturnType<typeof buildPluginCatalogConfig>;
+    // Optional providerId matches ProviderCatalogContext; falls back to the job provider.
+    resolveCatalogProviderApiKey: (providerId?: string) => ReturnType<ProviderApiKeyResolver>;
+    useStaticCatalog: boolean;
+    hasPreparedStaticResult: boolean;
+  };
+  const jobs: PhaseDiscoveryJob[] = [];
   for (const provider of byOrder[order]) {
     const pluginId = provider.pluginId ?? normalizeProviderId(provider.id);
     const ownerProviderIds = ctx.providerDiscoveryScope?.get(pluginId);
@@ -308,41 +322,70 @@ async function resolvePluginImplicitProviders(
       (ctx.providerDiscoveryEntriesOnly === true || !hasRuntimeProviderCatalog(provider));
     // Static catalogs are preferred for entries-only discovery and as a fallback
     // when runtime discovery produces no usable provider config.
-    const hasPreparedStaticResult = preparedStaticResults?.has(provider) === true;
-    const normalizedResult = await withProviderCatalogExpiry(
-      async () => {
-        let result;
-        if (useStaticCatalog) {
-          result = hasPreparedStaticResult
-            ? preparedStaticResults.get(provider)
-            : await runProviderStaticCatalog({ provider });
-        } else {
-          result = await runProviderCatalogWithTimeout({
-            provider,
-            authStore: ctx.authStore,
-            ...(providerIds !== undefined ? { providerIds } : {}),
-            config: catalogConfig,
-            agentDir: ctx.agentDir,
-            workspaceDir: ctx.workspaceDir,
-            env: ctx.env,
-            resolveProviderApiKey: resolveCatalogProviderApiKey,
-            resolveProviderAuth: (providerId, options) =>
-              ctx.resolveProviderAuth(providerId?.trim() || provider.id, options),
-            reportCatalogOutcome: ctx.onProviderCatalogOutcome,
-            timeoutMs:
-              ctx.providerDiscoveryTimeoutMs ?? resolveLiveProviderCatalogTimeoutMs(ctx.env),
-          });
-        }
-        if (!result && !useStaticCatalog && provider.staticCatalog) {
-          result = await runProviderStaticCatalog({ provider });
-        }
-        return result ? normalizePluginDiscoveryResult({ provider, result }) : undefined;
-      },
-      (acceptedProviders) => Object.keys(acceptedProviders ?? {}),
-    );
+    jobs.push({
+      provider,
+      includeProvider,
+      providerIds,
+      catalogConfig,
+      resolveCatalogProviderApiKey,
+      useStaticCatalog,
+      hasPreparedStaticResult: preparedStaticResults?.has(provider) === true,
+    });
+  }
+
+  const { results: phaseResults } = await runTasksWithConcurrency({
+    limit: PROVIDER_DISCOVERY_PHASE_CONCURRENCY,
+    errorMode: "stop",
+    throwOnError: true,
+    tasks: jobs.map((job) => async () => {
+      const {
+        provider,
+        providerIds,
+        catalogConfig,
+        resolveCatalogProviderApiKey,
+        useStaticCatalog,
+      } = job;
+      return withProviderCatalogExpiry(
+        async () => {
+          let result;
+          if (useStaticCatalog) {
+            result = job.hasPreparedStaticResult
+              ? preparedStaticResults?.get(provider)
+              : await runProviderStaticCatalog({ provider });
+          } else {
+            result = await runProviderCatalogWithTimeout({
+              provider,
+              authStore: ctx.authStore,
+              ...(providerIds !== undefined ? { providerIds } : {}),
+              config: catalogConfig,
+              agentDir: ctx.agentDir,
+              workspaceDir: ctx.workspaceDir,
+              env: ctx.env,
+              resolveProviderApiKey: resolveCatalogProviderApiKey,
+              resolveProviderAuth: (providerId, options) =>
+                ctx.resolveProviderAuth(providerId?.trim() || provider.id, options),
+              reportCatalogOutcome: ctx.onProviderCatalogOutcome,
+              timeoutMs:
+                ctx.providerDiscoveryTimeoutMs ?? resolveLiveProviderCatalogTimeoutMs(ctx.env),
+            });
+          }
+          if (!result && !useStaticCatalog && provider.staticCatalog) {
+            result = await runProviderStaticCatalog({ provider });
+          }
+          return result ? normalizePluginDiscoveryResult({ provider, result }) : undefined;
+        },
+        (acceptedProviders) => Object.keys(acceptedProviders ?? {}),
+      );
+    }),
+  });
+
+  // Merge in original phase order so concurrent discovery cannot reorder publications.
+  for (const [index, job] of jobs.entries()) {
+    const normalizedResult = phaseResults[index];
     if (!normalizedResult) {
       continue;
     }
+    const { provider, includeProvider } = job;
     for (const [providerId, implicitProvider] of Object.entries(normalizedResult)) {
       if (
         !includeProvider(providerId) ||

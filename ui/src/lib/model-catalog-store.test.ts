@@ -120,7 +120,7 @@ describe("model catalog display cache", () => {
       { agentId: "writer", sessionKey: "agent:writer:saved" },
       { agentId: "writer", authProfileId: "personal:reader:example:one" },
       { agentId: "writer", provider: "example" },
-      { agentId: "writer", includeDetails: true },
+      { agentId: "writer", includeDetails: false },
       { agentId: "writer", includeProviderCapabilities: true },
       { agentId: "writer", preparedOnly: true },
       { agentId: "writer", view: "provider-config" },
@@ -161,7 +161,11 @@ describe("model catalog display cache", () => {
     const follower = loadModelCatalog(client, { ...scope, timeoutMs: 30_000 });
     expect(request).toHaveBeenCalledTimes(3);
     expect(request.mock.calls.map(([, params]) => params)).toEqual(
-      Array.from({ length: 3 }, () => ({ view: "configured", agentId: "writer" })),
+      Array.from({ length: 3 }, () => ({
+        view: "configured",
+        agentId: "writer",
+        includeDetails: true,
+      })),
     );
     bounded.resolve({ models: [published] });
     expect(await Promise.all([limited, follower])).toEqual([
@@ -283,7 +287,11 @@ describe("model catalog display cache", () => {
       published,
     ]);
     expect(request).toHaveBeenCalledTimes(5);
-    expect(request.mock.calls[2]?.[1]).toEqual({ view: "provider-config", refresh: true });
+    expect(request.mock.calls[2]?.[1]).toEqual({
+      view: "provider-config",
+      refresh: true,
+      includeDetails: true,
+    });
   });
 
   it.each([false, true])(
@@ -536,5 +544,24 @@ describe("model catalog display cache", () => {
       loadModelCatalog(createTestGatewayClient(request), { signal: controller.signal }),
     ).rejects.toBe(reason);
     expect(request).not.toHaveBeenCalled();
+  });
+
+  // Local/input/contextTokens only reach the Control UI when models.list gets
+  // includeDetails. Chat and Settings catalog loads must request it; without
+  // that flag "Runs locally" and the vision/audio benefits stay dead.
+  it("requests includeDetails for picker and settings catalog loads", async () => {
+    const request = createGatewayRequestMock().mockResolvedValue({ models: [prepared] });
+    const client = createTestGatewayClient(request);
+    await loadModelCatalog(client, {
+      agentId: "main",
+      sessionKey: "agent:main:main",
+    });
+    expect(request.mock.calls.map(([, params]) => params)).toEqual([
+      expect.objectContaining({
+        agentId: "main",
+        sessionKey: "agent:main:main",
+        includeDetails: true,
+      }),
+    ]);
   });
 });

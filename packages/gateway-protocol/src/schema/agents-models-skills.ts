@@ -72,6 +72,18 @@ const ModelRuntimeProperties = {
   contextWindow: Type.Optional(Type.Integer({ minimum: 1 })),
   contextTokens: Type.Optional(Type.Integer({ minimum: 1 })),
   local: Type.Optional(Type.Boolean()),
+  /** Provider-reported local runtime facts; absent fields mean unknown. */
+  localModel: Type.Optional(
+    closedObject({
+      sizeBytes: Type.Optional(Type.Integer({ minimum: 0 })),
+      parameterSize: Type.Optional(NonEmptyString),
+      quantization: Type.Optional(NonEmptyString),
+      family: Type.Optional(NonEmptyString),
+      resident: Type.Optional(Type.Boolean()),
+      contextLengthReported: Type.Optional(Type.Integer({ minimum: 1 })),
+      residentVramBytes: Type.Optional(Type.Integer({ minimum: 0 })),
+    }),
+  ),
   contextWindows: Type.Optional(Type.Array(GatewayContextWindowOptionSchema)),
   contextWindowDefault: Type.Optional(NonEmptyString),
   reasoning: Type.Optional(Type.Boolean()),

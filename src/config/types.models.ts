@@ -25,6 +25,22 @@ type ModelProviderSchemaInput = NonNullable<ModelsSchemaInput["providers"]>[stri
 
 type ModelDefinitionSchemaInput = NonNullable<ModelProviderSchemaInput["models"]>[number];
 
+/**
+ * Provider-reported local runtime facts for a catalog or discovery row.
+ * Never authorization or availability — absent fields mean unknown, not zero.
+ */
+export type LocalModelFacts = {
+  sizeBytes?: number;
+  parameterSize?: string;
+  quantization?: string;
+  family?: string;
+  /** True only when the provider reports the model is already loaded; never triggers a load. */
+  resident?: boolean;
+  contextLengthReported?: number;
+  /** Resident VRAM bytes when the provider reports them (for example Ollama `/api/ps`). */
+  residentVramBytes?: number;
+};
+
 /** Provider/model compatibility switches consumed by request builders and tool schema adapters. */
 export type ModelCompatConfig = Omit<
   NonNullable<ModelDefinitionSchemaInput["compat"]>,
@@ -59,6 +75,11 @@ export type ModelDefinitionConfig = Omit<
   compat?: ModelCompatConfig;
   /** Media input limits used by routing and preflight compression. */
   mediaInput?: ModelMediaInputConfig;
+  /**
+   * Runtime-only local facts from live discovery. Not a config authoring field;
+   * absent means unknown. Copied onto ModelCatalogEntry for client projection.
+   */
+  localModel?: LocalModelFacts;
 };
 
 export type ModelProviderConfig = Omit<

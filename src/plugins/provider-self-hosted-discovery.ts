@@ -378,6 +378,14 @@ export async function discoverOpenAICompatibleLocalModels(
         SELF_HOSTED_DEFAULT_CONTEXT_WINDOW,
       maxTokens: params.maxTokens ?? SELF_HOSTED_DEFAULT_MAX_TOKENS,
       ...(runtimeContextTokens ? { contextTokens: runtimeContextTokens } : {}),
+      localModel: {
+        contextLengthReported:
+          params.contextWindow ??
+          readPositiveInteger(meta?.n_ctx_train) ??
+          readOpenAICompatibleContextWindow(model) ??
+          parentContextWindow ??
+          SELF_HOSTED_DEFAULT_CONTEXT_WINDOW,
+      },
     };
     return [modelConfig];
   });

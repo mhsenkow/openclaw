@@ -162,6 +162,7 @@ export { isCloudModelRef } from "@openclaw/model-catalog-core/model-catalog-refs
 export { parseModelRef } from "../agents/model-selection-normalize.js";
 export type {
   BedrockDiscoveryConfig,
+  LocalModelFacts,
   ModelCompatConfig,
   ModelDefinitionConfig,
 } from "../config/types.models.js";

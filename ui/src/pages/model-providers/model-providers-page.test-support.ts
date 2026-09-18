@@ -54,6 +54,8 @@ export type ModelProvidersPageTestElement = HTMLElement & {
   defaultsDraft: (DefaultModelSelection & Partial<ModelBehaviorConfig>) | null;
   keyDraft: string;
   keyEditorProvider: string | null;
+  openProviderLogin: (providers?: string[]) => Promise<void>;
+  providerLoginBusy: boolean;
   profileActions: Pick<ModelProviderProfileActionsController, "logout" | "setOrder">;
   messages: Record<string, { kind: "success" | "error"; text: string; warning?: string }>;
   profileOrders: Record<string, string[]>;

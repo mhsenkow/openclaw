@@ -208,6 +208,12 @@ export function resolveFinalDoctorHealthContributions(params: {
       run: (ctx) => runCoreHealthFindingNote(ctx, "core/doctor/local-audio-acceleration"),
     }),
     createDoctorHealthContribution({
+      id: "doctor:local-provider-reachability",
+      label: "Local provider reachability",
+      healthCheckIds: ["core/doctor/local-provider-reachability"],
+      run: (ctx) => runCoreHealthFindingNote(ctx, "core/doctor/local-provider-reachability"),
+    }),
+    createDoctorHealthContribution({
       id: "doctor:runtime-tool-schemas",
       label: "Runtime tool schemas",
       healthCheckIds: ["core/doctor/runtime-tool-schemas"],

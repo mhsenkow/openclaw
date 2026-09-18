@@ -55,6 +55,8 @@ const OLLAMA_SHOW_CONCURRENCY = 8;
 const OLLAMA_CONTEXT_ENRICH_LIMIT = 200;
 const OLLAMA_SHOW_TIMEOUT_MS = 3000;
 const OLLAMA_TAGS_TIMEOUT_MS = 5000;
+/** Keep /api/ps off the catalog critical path when the daemon is slow. */
+const OLLAMA_PS_TIMEOUT_MS = 1500;
 const MAX_OLLAMA_DISCOVERY_PROBES = OLLAMA_CONTEXT_ENRICH_LIMIT * 4;
 const MAX_OLLAMA_SHOW_CACHE_ENTRIES = 256;
 const ollamaModelShowInfoCache = new Map<string, Promise<OllamaModelShowInfo>>();
@@ -410,7 +412,10 @@ export function buildOllamaModelDefinition(
   modelId: string,
   contextWindow?: number,
   capabilities?: string[],
-  opts?: { showInspectionFailed?: boolean },
+  opts?: {
+    showInspectionFailed?: boolean;
+    localModel?: ModelDefinitionConfig["localModel"];
+  },
 ): ModelDefinitionConfig {
   return {
     id: modelId,
@@ -432,7 +437,36 @@ export function buildOllamaModelDefinition(
       supportsUsageInStreaming: true,
       supportsJsonSchemaResponseFormat: !isOllamaCloudModel(modelId),
     },
+    ...(opts?.localModel ? { localModel: opts.localModel } : {}),
   };
+}
+
+/** Map /api/tags (+ optional /api/ps) fields onto the catalog fact block. Never invent values. */
+export function buildOllamaLocalModelFacts(params: {
+  model: OllamaTagModel;
+  resident?: boolean;
+}): NonNullable<ModelDefinitionConfig["localModel"]> | undefined {
+  const details = params.model.details;
+  const facts: NonNullable<ModelDefinitionConfig["localModel"]> = {};
+  if (typeof params.model.size === "number" && Number.isFinite(params.model.size)) {
+    facts.sizeBytes = params.model.size;
+  }
+  if (details?.parameter_size) {
+    facts.parameterSize = details.parameter_size;
+  }
+  if (details?.quantization_level) {
+    facts.quantization = details.quantization_level;
+  }
+  if (details?.family) {
+    facts.family = details.family;
+  }
+  if (typeof details?.context_length === "number" && details.context_length > 0) {
+    facts.contextLengthReported = details.context_length;
+  }
+  if (params.resident === true) {
+    facts.resident = true;
+  }
+  return Object.keys(facts).length > 0 ? facts : undefined;
 }
 
 export function buildDefaultOllamaCloudModelDefinition(
@@ -575,18 +609,33 @@ export async function buildOllamaProvider(
 ): Promise<ModelProviderConfig> {
   const apiBase = resolveOllamaApiBase(configuredBaseUrl);
   const auth = opts?.apiKey ? { apiKey: opts.apiKey } : undefined;
-  const { reachable, models } = await fetchOllamaModels(apiBase, opts);
+  const requestOpts = { ...opts, ...auth };
+  const [{ reachable, models }, loaded] = await Promise.all([
+    fetchOllamaModels(apiBase, requestOpts),
+    fetchLoadedOllamaModelNames(apiBase, {
+      ...requestOpts,
+      timeoutMs: OLLAMA_PS_TIMEOUT_MS,
+    }),
+  ]);
   if (!reachable && !opts?.quiet) {
     console.warn(`Ollama could not be reached at ${apiBase}.`);
   }
   const discovered = await enrichOllamaCompletionModels(apiBase, models, auth);
+  const residentNames = new Set(loaded.reachable ? loaded.models : []);
   return {
     baseUrl: apiBase,
     api: "ollama",
-    models: discovered.map((model) =>
-      buildOllamaModelDefinition(model.name, model.contextWindow, model.capabilities, {
+    models: discovered.map((model) => {
+      const localModel = isOllamaCloudModel(model.name)
+        ? undefined
+        : buildOllamaLocalModelFacts({
+            model,
+            resident: residentNames.has(model.name),
+          });
+      return buildOllamaModelDefinition(model.name, model.contextWindow, model.capabilities, {
         showInspectionFailed: model.showInspectionFailed,
-      }),
-    ),
+        ...(localModel ? { localModel } : {}),
+      });
+    }),
   };
 }

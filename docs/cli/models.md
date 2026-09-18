@@ -164,9 +164,25 @@ empty; it does not restore the old discovered rows. If the published owner is no
 ready, retry after Gateway startup or the current refresh finishes.
 
 Options: `--all` (full published catalog), `--refresh` (provider discovery),
-`--local` (local endpoints), `--provider <id>`, `--agent <id>`, `--json`, and
-`--plain`. A provider filter reads the full published inventory for that provider,
-so it does not require `--all`.
+`--local` (local endpoints), `--resident` (local models reported as loaded/warm),
+`--provider <id>`, `--agent <id>`, `--json`, and `--plain`. A provider filter reads
+the full published inventory for that provider, so it does not require `--all`.
+`--resident` implies the local filter.
+
+### List local runtimes
+
+`openclaw models local` lists detected local runtimes and local catalog models with
+reachability and resident/warm state when providers report them. It reuses the same
+published catalog owner as `models list` and can probe configured local provider
+endpoints without starting servers.
+
+```bash
+openclaw models local
+openclaw models local --json
+openclaw models local --refresh
+```
+
+Options: `--refresh`, `--agent <id>`, `--json`, and `--plain`.
 
 Notes:
 

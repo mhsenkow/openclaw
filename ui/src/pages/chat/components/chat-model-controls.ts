@@ -376,6 +376,9 @@ export function renderChatModelControls(props: ChatModelControlsProps) {
     if (typeof catalogEntry?.local === "boolean") {
       pickerOption.local = catalogEntry.local;
     }
+    if (catalogEntry?.localModel) {
+      pickerOption.localModel = { ...catalogEntry.localModel };
+    }
     if (typeof catalogEntry?.reasoning === "boolean") {
       pickerOption.reasoning = catalogEntry.reasoning;
     }

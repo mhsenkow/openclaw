@@ -10,7 +10,11 @@ import "../../styles/model-setup.css";
 import type { ModelProviderLoginController } from "../model-providers/login-controller.ts";
 import { renderModelSetupFailure, renderConfiguredModel } from "./configured-model.ts";
 import { renderProviderIcon } from "./model-setup-icon-loader.ts";
-import { listModelSetupPrepareOptions, type ModelSetupPrepareOption } from "./prepare-options.ts";
+import {
+  isLocalRuntimeCandidate,
+  listModelSetupPrepareOptions,
+  type ModelSetupPrepareOption,
+} from "./prepare-options.ts";
 import { manualProviderName, renderManualProviderPicker } from "./provider-picker.ts";
 import type {
   ModelSetupActivationState,
@@ -104,7 +108,14 @@ function renderCandidateRows(props: ModelSetupViewProps, result: SystemAgentSetu
       </div>
       <div class="model-setup__rows">
         ${candidates
-          .toSorted((a, b) => a.label.localeCompare(b.label))
+          .toSorted((a, b) => {
+            const aLocal = isLocalRuntimeCandidate(a, result.prepareOptions);
+            const bLocal = isLocalRuntimeCandidate(b, result.prepareOptions);
+            if (aLocal !== bLocal) {
+              return aLocal ? -1 : 1;
+            }
+            return a.label.localeCompare(b.label);
+          })
           .map((candidate) => {
             const testing =
               props.activation.phase === "testing" &&
@@ -328,8 +339,29 @@ function renderPrepare(props: ModelSetupViewProps, result: SystemAgentSetupDetec
   if (!props.canPrepare) {
     return nothing;
   }
+  const advertised = result.prepareOptions;
+  if (advertised === undefined) {
+    return html`
+      <section class="settings-section" data-prepare-empty="missing">
+        <div class="settings-section__header">
+          <h2>${t("modelSetup.prepare.title")}</h2>
+        </div>
+        <p class="muted">${t("modelSetup.prepare.noneAdvertised")}</p>
+      </section>
+    `;
+  }
   const options = listModelSetupPrepareOptions(result);
   if (options.length === 0) {
+    if (advertised.length === 0) {
+      return html`
+        <section class="settings-section" data-prepare-empty="none">
+          <div class="settings-section__header">
+            <h2>${t("modelSetup.prepare.title")}</h2>
+          </div>
+          <p class="muted">${t("modelSetup.prepare.noneAvailable")}</p>
+        </section>
+      `;
+    }
     return nothing;
   }
   return html`
@@ -501,8 +533,9 @@ function renderReady(props: ModelSetupViewProps, result: SystemAgentSetupDetectR
   }
   return html`
     ${current} ${renderNativeSessionDiscovery(props, result)} ${renderEmptyState(props, result)}
-    ${renderCandidateRows(props, result)} ${renderUnavailable(props, result)}
-    ${renderPrepare(props, result)} ${renderSignIn(props, result)} ${renderManual(props, result)}
+    ${renderPrepare(props, result)} ${renderCandidateRows(props, result)}
+    ${renderUnavailable(props, result)} ${renderSignIn(props, result)}
+    ${renderManual(props, result)}
   `;
 }
 
@@ -559,14 +592,14 @@ function renderLoading(modelConfigured: boolean) {
             : nothing
         }
         ${renderLoadingSection({
-          title: t("modelSetup.candidates.title"),
-          className: "model-setup__loading-section--candidates",
-          status: modelConfigured ? undefined : t("modelSetup.loading"),
-        })}
-        ${renderLoadingSection({
           title: t("modelSetup.prepare.title"),
           intro: t("modelSetup.prepare.intro"),
           rows: 2,
+        })}
+        ${renderLoadingSection({
+          title: t("modelSetup.candidates.title"),
+          className: "model-setup__loading-section--candidates",
+          status: modelConfigured ? undefined : t("modelSetup.loading"),
         })}
         ${renderLoadingSection({
           title: t("modelSetup.signIn.title"),

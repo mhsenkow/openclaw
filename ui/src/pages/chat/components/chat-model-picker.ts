@@ -27,6 +27,7 @@ import {
   formatModelLabel,
   isModelPickerOptionSelected,
   modelPickerOptionKey,
+  orderChatModelPickerProviderGroups,
   renderChatModelPickerTag,
   renderChatModelPickerTargetOption,
   renderChatModelProviderIcon,
@@ -168,29 +169,10 @@ export function renderChatModelPicker(params: ChatModelPickerParams) {
           className: "chat-controls__trigger-provider-icon",
         })
       : nothing;
-  const providerGroups = new Map<string, ChatModelPickerOption[]>();
-  for (const option of params.modelOptions) {
-    const existing = providerGroups.get(option.provider);
-    if (existing) {
-      if (option.isDefault) {
-        existing.unshift(option);
-      } else {
-        existing.push(option);
-      }
-    } else {
-      providerGroups.set(option.provider, [option]);
-    }
-  }
-  const orderedProviderGroups = [...providerGroups];
-  const defaultProviderIndex = orderedProviderGroups.findIndex(
-    ([provider]) => provider === defaultModelOption?.provider,
+  const orderedProviderGroups = orderChatModelPickerProviderGroups(
+    params.modelOptions,
+    defaultModelOption?.provider,
   );
-  if (defaultProviderIndex > 0) {
-    const [defaultGroup] = orderedProviderGroups.splice(defaultProviderIndex, 1);
-    if (defaultGroup) {
-      orderedProviderGroups.unshift(defaultGroup);
-    }
-  }
   const orderedOptions = orderedProviderGroups.flatMap(([, options]) => options);
   const optionIndex = new Map(
     orderedOptions.map((option, index) => [modelPickerOptionKey(option), index]),
@@ -580,6 +562,7 @@ export function renderChatModelPicker(params: ChatModelPickerParams) {
                           modelLabel: previewOption
                             ? formatModelLabel(previewOption)
                             : params.triggerModelLabel,
+                          onModelSetup: params.onModelSetup,
                         })}
                       </aside>
                     </div>

@@ -368,6 +368,15 @@ export class ModelProvidersPage extends OpenClawLightDomElement {
     );
   }
 
+  /** Credentials login entry used by per-card Connect and model-setup auth. */
+  openProviderLogin(providers?: string[]) {
+    return this.login.open(providers);
+  }
+
+  get providerLoginBusy() {
+    return this.login.busy;
+  }
+
   private canMutate(): boolean {
     return this.mutationBlockedReason() === null && !this.configBusy();
   }
@@ -728,9 +737,12 @@ export class ModelProvidersPage extends OpenClawLightDomElement {
       onOpenModelSetup: () => this.context.navigate("model-setup"),
       ...this.login.providerActions,
     });
+    const loginActions = this.login.pageActions;
     return renderModelProvidersPageShell({
       onOpenModelSetup: () => this.context.navigate("model-setup"),
-      ...this.login.pageActions,
+      connectDisabled: !this.canMutate(),
+      login: loginActions.login,
+      loginMessage: loginActions.loginMessage,
       body,
     });
   }

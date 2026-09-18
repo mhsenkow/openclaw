@@ -3,6 +3,7 @@ import { normalizeProviderId } from "@openclaw/model-catalog-core/provider-id";
 import type { ModelProviderConfig } from "../config/types.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { createLazyImportLoader } from "../shared/lazy-promise.js";
+import { runTasksWithConcurrency } from "../utils/run-with-concurrency.js";
 import type { PluginMetadataRegistryView } from "./plugin-metadata-snapshot.types.js";
 import {
   copyProviderCatalogOutcomes,
@@ -12,6 +13,8 @@ import type { ProviderCatalogContext, ProviderCatalogOutcome } from "./provider-
 import type { ProviderCatalogOrder, ProviderPlugin } from "./types.js";
 
 const DISCOVERY_ORDER: readonly ProviderCatalogOrder[] = ["simple", "profile", "paired", "late"];
+/** Independent static catalogs within one phase; keep phases themselves ordered. */
+const STATIC_CATALOG_PHASE_CONCURRENCY = 4;
 const DANGEROUS_PROVIDER_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 const providerRuntimeLoader = createLazyImportLoader(
   () => import("./provider-discovery.runtime.js"),
@@ -222,16 +225,23 @@ export async function prepareProviderStaticCatalog(params: {
   const entries: PreparedProviderStaticCatalogEntry[] = [];
   const byOrder = groupPluginDiscoveryProvidersByOrder([...params.providers]);
   for (const order of DISCOVERY_ORDER) {
-    for (const provider of byOrder[order]) {
-      if (!provider.staticCatalog) {
-        continue;
+    const phaseProviders = byOrder[order].filter((provider) => provider.staticCatalog);
+    const { results } = await runTasksWithConcurrency({
+      limit: STATIC_CATALOG_PHASE_CONCURRENCY,
+      errorMode: "stop",
+      throwOnError: true,
+      tasks: phaseProviders.map(
+        (provider) => async () =>
+          Object.freeze({
+            provider,
+            result: await runProviderStaticCatalog({ provider }),
+          }),
+      ),
+    });
+    for (const entry of results) {
+      if (entry) {
+        entries.push(entry);
       }
-      entries.push(
-        Object.freeze({
-          provider,
-          result: await runProviderStaticCatalog({ provider }),
-        }),
-      );
     }
   }
   return Object.freeze({

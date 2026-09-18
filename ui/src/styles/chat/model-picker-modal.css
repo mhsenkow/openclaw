@@ -219,6 +219,16 @@
   text-transform: uppercase;
 }
 
+.chat-model-picker-tag__badge--warm {
+  color: var(--ok, var(--accent));
+}
+
+.chat-model-picker-tag__badge--size {
+  text-transform: none;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
 .chat-model-picker-tag__check {
   display: inline-flex;
   width: 14px;

@@ -236,6 +236,10 @@ export async function discoverLmstudioModels(
         contextWindow: base.contextWindow,
         contextTokens: base.contextTokens,
         maxTokens: base.maxTokens,
+        localModel: {
+          ...(base.loaded ? { resident: true as const } : {}),
+          ...(base.contextWindow ? { contextLengthReported: base.contextWindow } : {}),
+        },
       };
     })
     .filter((entry): entry is ModelDefinitionConfig => entry !== null);

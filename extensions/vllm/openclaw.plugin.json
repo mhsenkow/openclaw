@@ -41,6 +41,7 @@
       "provider": "vllm",
       "method": "custom",
       "choiceId": "vllm",
+      "appGuidedDiscovery": true,
       "choiceLabel": "vLLM",
       "choiceHint": "Local/self-hosted OpenAI-compatible server",
       "groupId": "vllm",

@@ -333,6 +333,12 @@ const enSettings = {
     disconnected: "Connect to the gateway to see configured model providers.",
     emptyTitle: "No model providers configured",
     emptySubtitle: "Sign in to a provider or add an API key, then refresh.",
+    localModelsTitle: "Local models",
+    localModelsSubtitle:
+      "Models that run on this machine. Warm models are already loaded in memory.",
+    localModelWarm: "Warm",
+    localModelCount: "{count} local models",
+    localModelResidentCount: "{resident} warm · {count} total",
     status: {
       ok: "Signed in",
       ready: "Ready",
@@ -449,6 +455,9 @@ const enSettings = {
       subtitle:
         "Model and behavior defaults for all agents. Agent-specific settings override these defaults. View each agent's model in Agents → Overview.",
       primary: "Model",
+      primaryHelpLabel: "About the primary model",
+      primaryHelp:
+        "The main model for chat turns and agent work when no session-specific model is pinned.",
       utility: "Utility Model",
       utilityHelpLabel: "About the utility model",
       utilityHelpPurpose:
@@ -459,6 +468,9 @@ const enSettings = {
       automaticUnavailable: "No recommended small model",
       disabled: "Disabled",
       fallback: "Fallback Model",
+      fallbackHelpLabel: "About the fallback model",
+      fallbackHelp:
+        "Tried next when the primary model is unavailable, rate-limited, or fails auth — not a second opinion on every turn.",
       noFallback: "No fallback model",
       selectModel: "Select a model",
       noModels: "Configure a provider before selecting default models.",

@@ -12,9 +12,76 @@ export type ModelPickerBenefit = {
   detail: string;
 };
 
+const TAG_LABELS: Readonly<Record<string, string>> = {
+  configured: "Configured",
+  fallback: "Fallback",
+  fallback1: "Fallback 1",
+  fallback2: "Fallback 2",
+  fallback3: "Fallback 3",
+  default: "Default",
+  local: "Local",
+};
+
+/** Turn opaque gateway tags into readable labels; unknown tags stay as-is for search. */
+export function formatModelPickerTag(tag: string): string {
+  const normalized = tag.trim().toLowerCase();
+  if (!normalized) {
+    return tag;
+  }
+  const mapped = TAG_LABELS[normalized];
+  if (mapped) {
+    return mapped;
+  }
+  const fallbackMatch = /^fallback(\d+)$/i.exec(normalized);
+  if (fallbackMatch) {
+    return `Fallback ${fallbackMatch[1]}`;
+  }
+  return tag;
+}
+
+export type ModelUnavailableAction = "connect-provider" | null;
+
+/** Map catalog unavailableReason to the picker's next-step action. */
+export function modelUnavailableAction(
+  option: Pick<ChatModelPickerOption, "disabled" | "unavailableReason">,
+): ModelUnavailableAction {
+  if (!option.disabled) {
+    return null;
+  }
+  if (option.unavailableReason === "missing-auth" || option.unavailableReason === "auth-failed") {
+    return "connect-provider";
+  }
+  return null;
+}
+
 /** Factual strengths from catalog fields — no invented marketing claims. */
 export function modelPickerBenefits(option: ChatModelPickerOption): ModelPickerBenefit[] {
   const benefits: ModelPickerBenefit[] = [];
+  if (option.local) {
+    benefits.push({
+      title: t("chat.modelControls.benefitLocalTitle"),
+      detail: t("chat.modelControls.benefitLocalDetail"),
+    });
+    benefits.push({
+      title: t("chat.modelControls.benefitNoKeyTitle"),
+      detail: t("chat.modelControls.benefitNoKeyDetail"),
+    });
+  }
+  if (option.localModel?.resident) {
+    benefits.push({
+      title: t("chat.modelControls.benefitWarmTitle"),
+      detail: t("chat.modelControls.benefitWarmDetail"),
+    });
+  }
+  const sizeChip = [option.localModel?.parameterSize, option.localModel?.quantization]
+    .filter(Boolean)
+    .join(" ");
+  if (sizeChip) {
+    benefits.push({
+      title: t("chat.modelControls.benefitSizeTitle"),
+      detail: t("chat.modelControls.benefitSizeDetail", { size: sizeChip }),
+    });
+  }
   const context = option.contextTokens ?? option.contextWindow;
   if (context) {
     benefits.push({
@@ -39,12 +106,6 @@ export function modelPickerBenefits(option: ChatModelPickerOption): ModelPickerB
     benefits.push({
       title: t("chat.modelControls.benefitReasoningTitle"),
       detail: t("chat.modelControls.benefitReasoningDetail"),
-    });
-  }
-  if (option.local) {
-    benefits.push({
-      title: t("chat.modelControls.benefitLocalTitle"),
-      detail: t("chat.modelControls.benefitLocalDetail"),
     });
   }
   const inputs = option.input ?? [];
@@ -72,6 +133,7 @@ export function modelPickerBenefits(option: ChatModelPickerOption): ModelPickerB
 export function renderModelPickerDetail(params: {
   option: ChatModelPickerOption | undefined;
   modelLabel: string;
+  onModelSetup?: () => void;
 }): TemplateResult {
   const option = params.option;
   if (!option) {
@@ -84,6 +146,8 @@ export function renderModelPickerDetail(params: {
   }
   const benefits = modelPickerBenefits(option);
   const tags = option.tags?.filter(Boolean) ?? [];
+  const unavailableAction = modelUnavailableAction(option);
+  const needsAuth = unavailableAction === "connect-provider";
   return html`
     <div class="chat-model-picker-detail__header">
       <p class="chat-model-picker-detail__provider">${providerDisplayLabel(option.provider)}</p>
@@ -92,12 +156,26 @@ export function renderModelPickerDetail(params: {
         option.disabled && option.unavailableReason
           ? html`<p class="chat-model-picker-detail__warning" role="status">
               ${
-                option.unavailableReason === "missing-auth" ||
-                option.unavailableReason === "auth-failed"
+                needsAuth
                   ? t("modelSetup.candidates.signInNeeded")
                   : t("chat.modelControls.runtimeUnavailable")
               }
             </p>`
+          : nothing
+      }
+      ${
+        needsAuth && params.onModelSetup
+          ? html`<button
+              class="btn btn--sm"
+              type="button"
+              @click=${(event: MouseEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+                params.onModelSetup?.();
+              }}
+            >
+              ${t("chat.modelControls.connectProvider")}
+            </button>`
           : nothing
       }
     </div>
@@ -107,7 +185,7 @@ export function renderModelPickerDetail(params: {
             class="chat-model-picker-detail__tags"
             aria-label=${t("chat.modelControls.detailTags")}
           >
-            ${tags.map((tag) => html`<li>${tag}</li>`)}
+            ${tags.map((tag) => html`<li title=${tag}>${formatModelPickerTag(tag)}</li>`)}
           </ul>`
         : nothing
     }

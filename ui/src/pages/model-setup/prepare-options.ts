@@ -1,5 +1,4 @@
 import type { SystemAgentSetupDetectResult } from "../../api/types.ts";
-import { t } from "../../i18n/index.ts";
 
 export type ModelSetupPrepareOption = {
   id: string;
@@ -15,25 +14,34 @@ export function providerAutoSetupKind(choiceId: string): `provider-auto:${string
   return `provider-auto:${encodeURIComponent(choiceId)}`;
 }
 
+/** Local runtime candidates already discovered by Gateway prepare/auth probes. */
+export function isLocalRuntimeCandidate(
+  candidate: SystemAgentSetupDetectResult["candidates"][number],
+  prepareOptions: SystemAgentSetupDetectResult["prepareOptions"],
+): boolean {
+  if (candidate.kind.startsWith("provider-auto:")) {
+    return true;
+  }
+  const advertised = new Set(
+    (prepareOptions ?? []).flatMap((option) =>
+      [option.brandId, option.id].filter((value): value is string => Boolean(value)),
+    ),
+  );
+  if (candidate.brandId && advertised.has(candidate.brandId)) {
+    return true;
+  }
+  const providerId = candidate.modelRef.split("/")[0];
+  return Boolean(providerId && advertised.has(providerId));
+}
+
+/**
+ * Gateway-advertised local prepare rows only. Older Gateways omit prepareOptions;
+ * callers must say so explicitly instead of inventing a stale Ollama/llama.cpp list.
+ */
 export function listModelSetupPrepareOptions(
   result: SystemAgentSetupDetectResult,
 ): ModelSetupPrepareOption[] {
-  // Released Gateways do not send prepareOptions. Keep their two existing
-  // choices until the connected Gateway can advertise provider-owned rows.
-  const legacyPrepareChoices: readonly ModelSetupPrepareOption[] = [
-    {
-      id: "ollama",
-      brandId: "ollama",
-      label: t("modelSetup.prepare.ollamaLabel"),
-      hint: t("modelSetup.prepare.ollamaHint"),
-    },
-    {
-      id: "llama-cpp",
-      brandId: "llama-cpp",
-      label: t("modelSetup.prepare.llamaCppLabel"),
-    },
-  ];
-  return (result.prepareOptions ?? legacyPrepareChoices).filter(
+  return (result.prepareOptions ?? []).filter(
     (choice) =>
       !result.candidates.some(
         (candidate) =>

@@ -14,6 +14,7 @@ import { resolveAgentHarnessPolicy } from "../../agents/harness/policy.js";
 import type { ModelAuthAvailabilityEvaluation } from "../../agents/model-auth-availability.js";
 import { resolveModelAuthLabel } from "../../agents/model-auth-label.js";
 import { createModelCatalogDecisions } from "../../agents/model-catalog-decisions.js";
+import { isLocalBaseUrl } from "../../agents/model-catalog-route.js";
 import {
   resolveLogicalModelCatalogEntryState,
   resolveLogicalVisibleModelCatalog,
@@ -131,6 +132,53 @@ type ParsedModelsCommand =
 
 function isModelsBrowseVisibleProvider(provider: string): boolean {
   return !isRetiredModelPickerProvider(provider);
+}
+
+function isLocalCatalogEntry(entry: Pick<ModelCatalogEntry, "baseUrl" | "localModel">): boolean {
+  if (entry.localModel !== undefined) {
+    return true;
+  }
+  return entry.baseUrl ? isLocalBaseUrl(entry.baseUrl) : false;
+}
+
+/** Local providers first so channel /model menus match Control UI ordering. */
+export function orderModelsProvidersLocalFirst(params: {
+  providers: readonly string[];
+  catalog: readonly Pick<ModelCatalogEntry, "provider" | "baseUrl" | "localModel">[];
+}): string[] {
+  const localProviders = new Set(
+    params.catalog.filter(isLocalCatalogEntry).map((entry) => normalizeProviderId(entry.provider)),
+  );
+  return [...params.providers].toSorted((left, right) => {
+    const leftLocal = localProviders.has(normalizeProviderId(left));
+    const rightLocal = localProviders.has(normalizeProviderId(right));
+    if (leftLocal !== rightLocal) {
+      return leftLocal ? -1 : 1;
+    }
+    return left.localeCompare(right);
+  });
+}
+
+/** Warm/resident local models first within one provider listing. */
+export function orderModelsIdsLocalFirst(params: {
+  modelIds: readonly string[];
+  provider: string;
+  catalog: readonly Pick<ModelCatalogEntry, "provider" | "id" | "localModel">[];
+}): string[] {
+  const provider = normalizeProviderId(params.provider);
+  const byId = new Map(
+    params.catalog
+      .filter((entry) => normalizeProviderId(entry.provider) === provider)
+      .map((entry) => [entry.id, entry] as const),
+  );
+  return [...params.modelIds].toSorted((left, right) => {
+    const leftResident = byId.get(left)?.localModel?.resident === true;
+    const rightResident = byId.get(right)?.localModel?.resident === true;
+    if (leftResident !== rightResident) {
+      return leftResident ? -1 : 1;
+    }
+    return left.localeCompare(right);
+  });
 }
 
 function normalizeRuntimeChoiceId(runtime: string | undefined): string {
@@ -440,7 +488,10 @@ async function projectPreparedModelsProviderData(
     }
   }
 
-  const providers = [...byProvider.keys()].toSorted();
+  const providers = orderModelsProvidersLocalFirst({
+    providers: [...byProvider.keys()],
+    catalog: [...visibleCatalog, ...catalog],
+  });
   const loginProviders = new Set(
     providers.filter(
       (provider) =>
@@ -865,7 +916,11 @@ function buildModelsCommandReply(
     };
   }
 
-  const models = [...(byProvider.get(provider) ?? new Set<string>())].toSorted();
+  const models = orderModelsIdsLocalFirst({
+    modelIds: [...(byProvider.get(provider) ?? new Set<string>())],
+    provider,
+    catalog: data.modelCatalog,
+  });
   const total = models.length;
 
   if (total === 0) {
