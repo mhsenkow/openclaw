@@ -357,6 +357,7 @@ async function invokeGatewayToolWithSignal(
       // generation into a session wake that the caller cannot read.
       inlineMediaGeneration: true,
       surface: "http",
+      assertInvocationCurrent: () => params.signal.throwIfAborted(),
       disablePluginTools,
       gatewayRequestedTools,
     });

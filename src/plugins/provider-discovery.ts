@@ -43,6 +43,7 @@ function isSafeProviderConfigKey(value: string): boolean {
 type PreparedProviderStaticCatalogEntry = Readonly<{
   provider: ProviderPlugin;
   result: Awaited<ReturnType<typeof runProviderStaticCatalog>>;
+  providerConfigs: Readonly<Record<string, ModelProviderConfig>>;
 }>;
 
 export type PreparedProviderStaticCatalog = Readonly<{
@@ -200,8 +201,13 @@ export async function runProviderCatalog(params: {
   return result;
 }
 
-export function runProviderStaticCatalog(params: { provider: ProviderPlugin }) {
+export function runProviderStaticCatalog(params: {
+  provider: ProviderPlugin;
+  signal?: AbortSignal;
+}) {
+  params.signal?.throwIfAborted();
   return params.provider.staticCatalog?.run({
+    ...(params.signal ? { signal: params.signal } : {}),
     config: {},
     env: {},
     resolveProviderApiKey: () => ({
@@ -221,6 +227,7 @@ export function runProviderStaticCatalog(params: { provider: ProviderPlugin }) {
  */
 export async function prepareProviderStaticCatalog(params: {
   providers: readonly ProviderPlugin[];
+  signal?: AbortSignal;
 }): Promise<PreparedProviderStaticCatalog> {
   const entries: PreparedProviderStaticCatalogEntry[] = [];
   const byOrder = groupPluginDiscoveryProvidersByOrder([...params.providers]);
@@ -231,11 +238,15 @@ export async function prepareProviderStaticCatalog(params: {
       errorMode: "stop",
       throwOnError: true,
       tasks: phaseProviders.map(
-        (provider) => async () =>
-          Object.freeze({
+        (provider) => async () => {
+          const result = await runProviderStaticCatalog({ provider, signal: params.signal });
+          params.signal?.throwIfAborted();
+          return Object.freeze({
             provider,
-            result: await runProviderStaticCatalog({ provider }),
-          }),
+            result,
+            providerConfigs: normalizePluginDiscoveryResult({ provider, result }),
+          });
+        },
       ),
     });
     for (const entry of results) {
@@ -255,7 +266,7 @@ export function resolvePreparedProviderStaticConfigs(
 ): Record<string, ModelProviderConfig> {
   const providers: Record<string, ModelProviderConfig> = {};
   for (const entry of prepared?.entries ?? []) {
-    Object.assign(providers, normalizePluginDiscoveryResult(entry));
+    Object.assign(providers, entry.providerConfigs);
   }
   return providers;
 }

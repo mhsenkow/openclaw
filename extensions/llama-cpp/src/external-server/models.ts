@@ -98,7 +98,7 @@ function buildCompat(
   return {
     supportsStore: false,
     supportsDeveloperRole: false,
-    supportsReasoningEffort: false,
+    supportsReasoningEffort: asBoolean(caps?.supports_reasoning_effort) === true,
     supportsTemperature: true,
     supportsUsageInStreaming: true,
     supportsTools,
@@ -120,17 +120,18 @@ export function mapLlamaServerModel(
   }
   const contextWindow = resolveContextWindow(props);
   const status = normalizeStatus(row.status?.value);
+  const compat = buildCompat(props);
   return {
     config: {
       id,
       name: id,
-      reasoning: false,
+      reasoning: compat.supportsReasoningEffort === true,
       input: resolveInput(row, props),
       cost: { ...SELF_HOSTED_DEFAULT_COST },
       contextWindow,
       contextTokens: contextWindow,
       maxTokens: resolveMaxTokens(props, contextWindow),
-      compat: buildCompat(props),
+      compat,
       localModel: {
         contextLengthReported: contextWindow,
         ...(status === "loaded" ? { resident: true as const } : {}),

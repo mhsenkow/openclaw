@@ -41,6 +41,7 @@ import {
   type ModelVisibilityPolicy,
 } from "../../agents/model-visibility-policy.js";
 import {
+  createModelCatalogIdentityKeyResolver,
   createOpenAIModelRoutesResolver,
   openAIModelCatalogRoutePolicy,
   resolveModelCatalogIdentityKey,
@@ -123,11 +124,7 @@ export function createGatewayAgentModelCatalogProjector(params: ModelCatalogDeci
               pluginRegistry: params.pluginRegistry,
             })?.id ?? "openclaw";
           const selected = selectModelCatalogRuntimeEntry({ entry, routeVariants, runtimeId });
-          return createModelCatalogView({
-            cfg: params.cfg,
-            catalog: [selected.entry],
-            routeVariants: selected.variants,
-          }).project(selected.entry, evaluation).runtimeEntry;
+          return view.project(selected.entry, evaluation, selected.variants).runtimeEntry;
         }),
       ));
     },
@@ -632,6 +629,7 @@ export async function prepareModelsListResult(
   });
   const readCatalog = await prepareLogicalVisibleModelCatalog({
     cfg,
+    metadataSnapshot,
     catalog,
     defaultProvider: DEFAULT_PROVIDER,
     defaultModel,
@@ -696,11 +694,12 @@ export async function prepareModelsListResult(
 
   return {
     isCurrent: () => isCurrent() && projector.isCurrent(),
-    read: () => ({
-      models: readCatalog()
-        .filter(matchesProvider)
-        .map((entry) => {
-          const key = resolveModelCatalogIdentityKey(entry);
+    read: () => {
+      const currentCatalog = readCatalog();
+      const keyOf = createModelCatalogIdentityKeyResolver();
+      return {
+        models: currentCatalog.filter(matchesProvider).map((entry) => {
+          const key = keyOf(entry);
           const evaluation = evaluations.get(key);
           if (!evaluation) {
             throw new Error("Model catalog publication omitted prepared auth evaluation");
@@ -712,7 +711,8 @@ export async function prepareModelsListResult(
           }
           return projected;
         }),
-      ...outcomeProjection,
-    }),
+        ...outcomeProjection,
+      };
+    },
   };
 }

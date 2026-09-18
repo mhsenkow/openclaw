@@ -25,6 +25,7 @@ import {
 } from "../plugins/provider-discovery.js";
 import { matchesProviderPluginRef } from "../plugins/provider-registry-shared.js";
 import { prepareProviderExternalAuthWithPlugin } from "../plugins/provider-runtime.js";
+import { getPluginRuntimeGenerationRegistry } from "../plugins/runtime/generation-scope.js";
 import { resolveManifestSyntheticAuthProviderRefState } from "../plugins/synthetic-auth.runtime.js";
 import { resolveNonEnvSecretRefApiKeyMarker } from "../secrets/provider-credential-values.js";
 import { runTasksWithConcurrency } from "../utils/run-with-concurrency.js";
@@ -505,8 +506,9 @@ export async function prepareImplicitProviderStaticCatalog(
     | "providerDiscoveryProviderIds"
     | "staticCatalogProviderIds"
     | "workspaceDir"
-  >,
+  > & { signal?: AbortSignal },
 ): Promise<PreparedProviderStaticCatalog> {
+  params.signal?.throwIfAborted();
   const env = params.env ?? process.env;
   const discoveryScope = resolveImplicitProviderDiscoveryScope(params);
   const providers = await resolveRuntimePluginDiscoveryProviders({
@@ -517,7 +519,7 @@ export async function prepareImplicitProviderStaticCatalog(
     ...(params.pluginMetadataSnapshot
       ? { pluginMetadataSnapshot: params.pluginMetadataSnapshot }
       : {}),
-    discoveryEntriesOnly: true,
+    discoveryEntriesOnly: !getPluginRuntimeGenerationRegistry(),
     includeSyntheticAuthProviders: true,
   });
   const staticCatalogProviderIds = params.staticCatalogProviderIds
@@ -549,6 +551,7 @@ export async function prepareImplicitProviderStaticCatalog(
     );
   });
   const prepared = await prepareProviderStaticCatalog({
+    signal: params.signal,
     providers: staticCatalogProviderIds
       ? eligibleProviders.filter((provider) => {
           if ([...staticCatalogProviderIds].some((id) => matchesProviderPluginRef(provider, id))) {
@@ -577,17 +580,23 @@ export async function prepareImplicitProviderStaticCatalog(
         const plugin = params.pluginMetadataSnapshot?.manifestRegistry.plugins.find(
           (candidate) => candidate.id === (entry.provider.pluginId ?? entry.provider.id),
         );
-        const providerEntries = Object.entries(normalizePluginDiscoveryResult(entry));
+        const providerEntries = Object.entries(entry.providerConfigs);
         const eligible = providerEntries.filter(([provider]) =>
           isProviderCatalogSourceAllowed({ provider, config: params.config, plugin }),
         );
-        return eligible.length === providerEntries.length
-          ? entry
-          : { provider: entry.provider, result: { providers: Object.fromEntries(eligible) } };
+        if (eligible.length === providerEntries.length) {
+          return entry;
+        }
+        const providerConfigs = Object.fromEntries(eligible);
+        return {
+          provider: entry.provider,
+          result: { providers: providerConfigs },
+          providerConfigs,
+        };
       }),
       ...providers
         .filter((provider) => provider.staticCatalog && !eligibleProviders.includes(provider))
-        .map((provider) => ({ provider, result: { providers: {} } })),
+        .map((provider) => ({ provider, result: { providers: {} }, providerConfigs: {} })),
     ]),
   });
 }

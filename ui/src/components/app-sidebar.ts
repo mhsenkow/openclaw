@@ -595,6 +595,7 @@ class AppSidebar extends AppSidebarSessionNavigationElement implements SessionLi
       empty: visibleSessions.length === 0,
       sections,
       nativeSessionsHaveMore: this.sessionData.sessionsResult?.hasMore === true,
+      nativeSessionsLoading: this.sessionData.sessionsLoading,
       catalogRenderer: this.catalogRenderer,
       catalogs: {
         catalogs,

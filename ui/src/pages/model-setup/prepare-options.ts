@@ -8,9 +8,10 @@ export type ModelSetupPrepareOption = {
   actionLabel?: string;
   icon?: string;
   website?: string;
+  modelTarget?: "utility";
 };
 
-export function providerAutoSetupKind(choiceId: string): `provider-auto:${string}` {
+function providerAutoSetupKind(choiceId: string): `provider-auto:${string}` {
   return `provider-auto:${encodeURIComponent(choiceId)}`;
 }
 
@@ -32,6 +33,14 @@ export function isLocalRuntimeCandidate(
   }
   const providerId = candidate.modelRef.split("/")[0];
   return Boolean(providerId && advertised.has(providerId));
+}
+
+export function preparedModelActivation(option: ModelSetupPrepareOption, modelRef: string) {
+  return {
+    kind: providerAutoSetupKind(option.id),
+    modelRef,
+    ...(option.modelTarget ? { modelTarget: option.modelTarget } : {}),
+  };
 }
 
 /**
