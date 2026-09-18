@@ -25,6 +25,7 @@ function setModalLayer(modal: HTMLElement, open: boolean) {
 export class OpenClawModalDialog extends OpenClawLitElement {
   @property({ type: Boolean }) open = true;
   @property({ type: Boolean, reflect: true }) manual = false;
+  @property({ type: Boolean, attribute: "light-dismiss" }) lightDismiss = true;
   @property() label = "";
   @property() description = "";
 
@@ -244,7 +245,7 @@ export class OpenClawModalDialog extends OpenClawLitElement {
     return html`
       <wa-dialog
         without-header
-        light-dismiss
+        ?light-dismiss=${this.lightDismiss}
         .label=${this.label}
         @focusin=${this.handleInitialFocus}
         @wa-after-show=${this.handleInitialFocus}

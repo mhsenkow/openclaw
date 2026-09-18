@@ -145,6 +145,8 @@ type AgentsProps = {
   onIdentityFieldChange: (field: "name" | "emoji", value: string) => void;
   onIdentityAvatarSelect: (file: File) => void;
   onIdentitySave: () => void;
+  onOpenAvatarStudio?: () => void;
+  avatarStudio?: unknown;
   onModelChange: (agentId: string, modelId: string | null) => void;
   onModelFallbacksChange: (agentId: string, fallbacks: string[]) => void;
   onModelCatalogOpen: () => void;
@@ -326,6 +328,7 @@ export function renderAgents(props: AgentsProps) {
                             onIdentityFieldChange: props.onIdentityFieldChange,
                             onIdentityAvatarSelect: props.onIdentityAvatarSelect,
                             onIdentitySave: props.onIdentitySave,
+                            onOpenAvatarStudio: props.onOpenAvatarStudio,
                             onModelChange: props.onModelChange,
                             onModelFallbacksChange: props.onModelFallbacksChange,
                             onModelCatalogOpen: props.onModelCatalogOpen,
@@ -483,6 +486,7 @@ export function renderAgents(props: AgentsProps) {
               `
         }
       </section>
+      ${props.avatarStudio ?? nothing}
     </div>
   `;
 }

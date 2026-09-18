@@ -10,6 +10,8 @@ export function cloneLayout(layout: SidebarLayout): SidebarLayout {
 }
 
 export const SIDEBAR_MIN_WIDTH_PX = 260;
+/** Default Agent panel width — a touch wider than the first muse seed. */
+export const SIDEBAR_AGENT_DEFAULT_WIDTH_PX = 320;
 export const SIDEBAR_MIN_HEIGHT_PX = 220;
 const SIDEBAR_MAX_WIDTH_PX = 1_200;
 const SIDEBAR_MAX_HEIGHT_PX = 800;

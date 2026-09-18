@@ -8,6 +8,7 @@ import {
   sidebarActivePanel,
   isSidebarSlotVisible,
   SIDEBAR_MIN_WIDTH_PX,
+  SIDEBAR_AGENT_DEFAULT_WIDTH_PX,
 } from "./sidebar-layout-geometry.ts";
 import type {
   SidebarColumn,
@@ -34,13 +35,13 @@ export {
   fitSidebarLayout,
   isSidebarRegionCollapsed,
   SIDEBAR_MIN_WIDTH_PX,
+  SIDEBAR_AGENT_DEFAULT_WIDTH_PX,
   SIDEBAR_MIN_HEIGHT_PX,
   SIDEBAR_NARROW_BREAKPOINT_PX,
 } from "./sidebar-layout-geometry.ts";
 
 const SIDEBAR_DEFAULT_WIDTH_PX = 480;
 const SIDEBAR_DEFAULT_HEIGHT_PX = 360;
-const SIDEBAR_AGENT_DEFAULT_WIDTH_PX = 260;
 export const SIDEBAR_GEOMETRY_COMMIT_EVENT = "openclaw-sidebar-geometry-commit";
 
 function createSidebarColumn(): SidebarColumn {

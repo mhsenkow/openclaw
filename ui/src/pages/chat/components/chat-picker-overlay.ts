@@ -53,10 +53,27 @@ function clearPointerFocus(this: HTMLElement): void {
   this.removeAttribute(POINTER_RESTORED_FOCUS_ATTRIBUTE);
 }
 
+export function pathHitsModelPickerShell(path: EventTarget[]): boolean {
+  // Match the modal shell only — not the portal host or wa-dialog backdrop —
+  // so outside/backdrop clicks still dismiss while gear/search stay live.
+  return path.some(
+    (node) =>
+      node instanceof Element &&
+      (node.classList.contains("chat-model-picker-modal__shell") ||
+        Boolean(node.closest?.(".chat-model-picker-modal__shell"))),
+  );
+}
+
 function dismissChatComposerPickersOutside(event: PointerEvent): void {
   const path = event.composedPath();
+  const hitsModelShell = pathHitsModelPickerShell(path);
   for (const picker of openChatComposerPickers()) {
-    if (!path.includes(picker)) {
+    const pathHitsPicker = path.includes(picker);
+    // Model chooser content is portaled to document.body — not a DOM child of
+    // the <details> trigger — so outside-dismiss must recognize the shell.
+    const pathHitsModelModal =
+      picker.classList.contains("chat-controls__model-picker") && hitsModelShell;
+    if (!pathHitsPicker && !pathHitsModelModal) {
       closeComposerPicker(picker);
     }
   }

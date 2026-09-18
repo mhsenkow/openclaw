@@ -225,6 +225,8 @@ export function renderAgentIdentityAvatar(
     avatar?: string | null;
     textAvatar?: string | null;
     pending?: boolean;
+    /** Presentation-only run mood for the identity slot. */
+    presence?: "idle" | "busy" | "error" | "offline";
   },
   className = "",
   onImageError?: () => void,
@@ -244,8 +246,10 @@ export function renderAgentIdentityAvatar(
     sourceUrl: agent.avatar ?? undefined,
     pending: agent.pending ?? imageUrl !== null,
   };
+  const presenceClass = agent.presence ? ` identity-avatar--${agent.presence}` : "";
   return html`<span
-    class=${identityAvatarClass(`identity-avatar--agent ${className}`, view)}
+    class=${identityAvatarClass(`identity-avatar--agent ${className}${presenceClass}`, view)}
+    data-avatar-presence=${agent.presence ?? nothing}
     role=${agent.name ? "img" : nothing}
     aria-label=${agent.name ?? nothing}
     aria-hidden=${agent.name ? nothing : "true"}

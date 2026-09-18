@@ -25,7 +25,9 @@ function selectableModelRows(root: HTMLElement): HTMLButtonElement[] {
 }
 
 function ensureModelPickerIds(menu: HTMLElement): void {
-  const details = menu.closest<HTMLDetailsElement>(".chat-controls__model-picker");
+  const details =
+    menu.closest<HTMLDetailsElement>(".chat-controls__model-picker") ??
+    document.querySelector<HTMLDetailsElement>("details.chat-controls__model-picker[open]");
   const input = menu.querySelector<HTMLInputElement>("[data-chat-model-search]");
   const listboxes = [...menu.querySelectorAll<HTMLElement>("[data-chat-model-list]")];
   if (!details || !input || listboxes.length === 0) {
@@ -88,10 +90,14 @@ function modelMatchRank(row: HTMLButtonElement, query: string): number | null {
   if (keywords.includes(query)) {
     return 2;
   }
-  if (provider.startsWith(query)) {
+  // Provider match is prefix/token only — "llama" must not hit every "ollama" row.
+  if (provider === query || provider.startsWith(query)) {
     return 3;
   }
-  return provider.includes(query) ? 4 : null;
+  if (provider.split(/[^a-z0-9]+/iu).some((part) => part.length > 0 && part.startsWith(query))) {
+    return 4;
+  }
+  return null;
 }
 
 export function updateModelSearch(input: HTMLInputElement, preserveHighlight = false): void {
@@ -145,7 +151,11 @@ export function updateModelSearch(input: HTMLInputElement, preserveHighlight = f
 }
 
 export function resetModelSearch(details: HTMLDetailsElement): void {
-  const input = details.querySelector<HTMLInputElement>("[data-chat-model-search]");
+  const input =
+    details.querySelector<HTMLInputElement>("[data-chat-model-search]") ??
+    document.querySelector<HTMLInputElement>(
+      "openclaw-modal-dialog.chat-model-picker-modal [data-chat-model-search]",
+    );
   if (!input) {
     return;
   }
@@ -216,7 +226,12 @@ export function handleModelPickerKeydown(event: KeyboardEvent): void {
   ) {
     return;
   }
-  const row = selectableModelRows(details)[Number(event.key) - 1];
+  const menu =
+    details.querySelector<HTMLElement>(".chat-controls__model-menu") ??
+    document.querySelector<HTMLElement>(
+      "openclaw-modal-dialog.chat-model-picker-modal .chat-controls__model-menu",
+    );
+  const row = menu ? selectableModelRows(menu)[Number(event.key) - 1] : undefined;
   event.preventDefault();
   row?.click();
 }
@@ -227,8 +242,13 @@ export function syncChatModelSearch(details: Element | undefined): void {
   }
   // Keyed catalog rows commit after the details binding; project the retained
   // query onto the new DOM without resetting a still-valid keyboard selection.
+  // The focused modal mounts beside the details trigger, not inside it.
   queueMicrotask(() => {
-    const input = details.querySelector<HTMLInputElement>("[data-chat-model-search]");
+    const input =
+      details.querySelector<HTMLInputElement>("[data-chat-model-search]") ??
+      document.querySelector<HTMLInputElement>(
+        "openclaw-modal-dialog.chat-model-picker-modal [data-chat-model-search]",
+      );
     if (input) {
       updateModelSearch(input, true);
     }

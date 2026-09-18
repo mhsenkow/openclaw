@@ -28,6 +28,10 @@ export type ChatModelPickerOption = {
   label: string;
   provider: string;
   supportsTools?: boolean;
+  local?: boolean;
+  reasoning?: boolean;
+  input?: ReadonlyArray<"text" | "image" | "audio" | "video" | "document">;
+  tags?: readonly string[];
   value: string;
 };
 
@@ -84,7 +88,7 @@ function formatAgentRuntimeLabel(id: string): string {
   );
 }
 
-function formatModelLabel(option: ChatModelPickerOption): string {
+export function formatModelLabel(option: ChatModelPickerOption): string {
   const prefixes = [
     formatRawProviderLabel(option.provider),
     providerDisplayLabel(option.provider),
@@ -105,6 +109,95 @@ function formatModelLabel(option: ChatModelPickerOption): string {
 
 export function renderChatModelProviderIcon(provider: string) {
   return renderProviderBrandIcon(provider, { className: "chat-controls__provider-icon" });
+}
+
+export function renderChatModelPickerTag(params: {
+  disabled: boolean;
+  entry: ChatModelPickerOption;
+  index: number;
+  selectedModelValue: string;
+  selectedAgentRuntime?: string;
+  sessionModelPinned: boolean;
+  previewed: boolean;
+  onHighlight: (row: HTMLButtonElement) => void;
+  onSelect: (entry: ChatModelPickerOption, event: MouseEvent) => void;
+  onModelSetup?: () => void;
+}) {
+  const selected = isModelPickerOptionSelected(
+    params.entry,
+    params.selectedModelValue,
+    params.selectedAgentRuntime,
+  );
+  const modelLabel = formatModelLabel(params.entry);
+  const resetsPin = params.entry.isDefault && params.sessionModelPinned;
+  const needsAuth =
+    params.entry.disabled &&
+    (params.entry.unavailableReason === "missing-auth" ||
+      params.entry.unavailableReason === "auth-failed");
+  const onModelSetup = needsAuth ? params.onModelSetup : undefined;
+  const accessibleStatus = needsAuth
+    ? t("modelSetup.candidates.signInNeeded")
+    : params.entry.unavailableReason === "unsupported-runtime"
+      ? t("chat.modelControls.runtimeUnavailable")
+      : "";
+  return html`<button
+    class="chat-model-picker-tag ${selected ? "is-selected" : ""} ${
+      params.previewed ? "is-preview" : ""
+    } ${params.entry.disabled && !resetsPin ? "is-unavailable" : ""}"
+    data-chat-model-option=${params.entry.value}
+    data-chat-model-runtime=${params.entry.agentRuntime ?? nothing}
+    data-chat-model-default=${params.entry.isDefault ? "true" : nothing}
+    data-chat-model-index=${params.index}
+    data-chat-model-keywords=${
+      [
+        params.entry.isDefault ? t("chat.modelControls.default").toLocaleLowerCase() : "",
+        ...(params.entry.tags ?? []).map((tag) => tag.toLocaleLowerCase()),
+      ]
+        .filter(Boolean)
+        .join(" ") || nothing
+    }
+    data-chat-model-name=${modelLabel.toLocaleLowerCase()}
+    data-chat-model-provider-label=${providerDisplayLabel(
+      params.entry.provider,
+    ).toLocaleLowerCase()}
+    role="option"
+    aria-selected=${selected ? "true" : "false"}
+    title=${accessibleStatus || modelLabel}
+    aria-label=${[
+      modelLabel,
+      params.entry.agentRuntimeId ? formatAgentRuntimeLabel(params.entry.agentRuntimeId) : "",
+      accessibleStatus,
+      params.entry.supportsTools === false ? t("chat.modelControls.chatOnlyHelp") : "",
+    ]
+      .filter(Boolean)
+      .join(". ")}
+    type="button"
+    ?disabled=${params.disabled || (params.entry.disabled && !onModelSetup && !resetsPin)}
+    data-chat-model-setup=${onModelSetup ? "true" : nothing}
+    @mouseenter=${(event: MouseEvent) =>
+      params.onHighlight(event.currentTarget as HTMLButtonElement)}
+    @focus=${(event: FocusEvent) => params.onHighlight(event.currentTarget as HTMLButtonElement)}
+    @click=${(event: MouseEvent) => {
+      if (params.entry.disabled && !resetsPin) {
+        event.stopPropagation();
+        onModelSetup?.();
+        return;
+      }
+      params.onSelect(params.entry, event);
+    }}
+  >
+    <span class="chat-model-picker-tag__label">${modelLabel}</span>
+    ${
+      params.entry.isDefault
+        ? html`<span class="chat-model-picker-tag__badge">${t("chat.modelControls.default")}</span>`
+        : nothing
+    }
+    ${
+      selected
+        ? html`<span class="chat-model-picker-tag__check" aria-hidden="true">${icons.check}</span>`
+        : nothing
+    }
+  </button>`;
 }
 
 export function renderChatModelPickerOption(params: {

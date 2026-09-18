@@ -39,6 +39,37 @@
   visibility: hidden;
 }
 
+.identity-avatar--agent.identity-avatar--busy {
+  animation: identity-avatar-busy 1.4s ease-in-out infinite;
+}
+
+.identity-avatar--agent.identity-avatar--error {
+  filter: saturate(0.85) hue-rotate(-12deg);
+  box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--danger) 55%, transparent);
+}
+
+.identity-avatar--agent.identity-avatar--offline {
+  filter: grayscale(0.55) brightness(0.92);
+  opacity: 0.82;
+}
+
+@keyframes identity-avatar-busy {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 35%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .identity-avatar--agent.identity-avatar--busy {
+    animation: none;
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 40%, transparent);
+  }
+}
+
 .identity-avatar__text::before {
   content: attr(data-avatar);
 }

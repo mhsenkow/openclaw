@@ -353,6 +353,9 @@ async function invokeGatewayToolWithSignal(
       conversationReadOrigin,
       allowGatewaySubagentBinding: true,
       allowMediaInvokeCommands: true,
+      // HTTP / tools.invoke consume tool output directly — do not detach media
+      // generation into a session wake that the caller cannot read.
+      inlineMediaGeneration: true,
       surface: "http",
       disablePluginTools,
       gatewayRequestedTools,

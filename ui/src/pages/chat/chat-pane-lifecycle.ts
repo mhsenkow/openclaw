@@ -71,6 +71,7 @@ import {
 import { resetChatViewState } from "./chat-view-state.ts";
 import { publishChatWorkContext } from "./chat-work-context.ts";
 import { dismissConfirmedActionPopovers } from "./components/chat-message.ts";
+import { pathHitsModelPickerShell } from "./components/chat-picker-overlay.ts";
 import { dismissThreadPortals } from "./components/chat-thread-interactions.ts";
 import { WIDGET_PROMPT_EVENT, type WidgetPromptEventDetail } from "./components/chat-tool-cards.ts";
 import { CHAT_COMPOSER_DRAFT_STORAGE_ERROR } from "./composer-persistence.ts";
@@ -285,12 +286,18 @@ export abstract class ChatPaneLifecycle extends ChatPaneSessionCreation {
       return;
     }
     const path = event.composedPath();
+    const hitsModelShell = pathHitsModelPickerShell(path);
     let changed = false;
     this.querySelectorAll<HTMLDetailsElement>(CHAT_OPEN_DETAILS_SELECTOR).forEach((details) => {
-      if (!path.includes(details)) {
-        details.open = false;
-        changed = true;
+      if (path.includes(details)) {
+        return;
       }
+      // Model chooser content is portaled outside <details>; keep it open.
+      if (details.classList.contains("chat-controls__model-picker") && hitsModelShell) {
+        return;
+      }
+      details.open = false;
+      changed = true;
     });
     if (changed) {
       state.requestUpdate();

@@ -99,6 +99,22 @@ export class ChatAgentPanelElement extends OpenClawLightDomElement {
     return this.context?.gateway.snapshot.phase === "connected";
   }
 
+  private get avatarPresence(): "idle" | "busy" | "error" | "offline" {
+    if (!this.connectedPhase) {
+      return "offline";
+    }
+    const session = this.context?.sessions.state.result?.sessions?.find((row) =>
+      areUiSessionKeysEquivalent(row.key, this.sessionKey),
+    );
+    if (session?.status === "failed") {
+      return "error";
+    }
+    if (session?.hasActiveRun === true) {
+      return "busy";
+    }
+    return "idle";
+  }
+
   private get approvalQueue() {
     const queue = this.context?.overlays.snapshot.approvalQueue ?? [];
     const agentId = this.agentId?.trim();
@@ -124,15 +140,30 @@ export class ChatAgentPanelElement extends OpenClawLightDomElement {
   private renderHeader(): TemplateResult {
     const name = this.assistantName.trim() || t("chat.sidePanel.agent");
     const connected = this.connectedPhase;
+    const agentId = this.agentId?.trim();
+    const editHref = agentId
+      ? `/settings/agents/${encodeURIComponent(agentId)}`
+      : "/settings/agents";
     return html`
       <header class="chat-agent-panel__header">
-        <span class="chat-agent-panel__avatar" aria-hidden="true">
-          ${renderAgentIdentityAvatar({
-            id: this.agentId ?? "agent",
-            avatar: this.assistantAvatar,
-            textAvatar: this.assistantAvatarText,
-          })}
-        </span>
+        <div class="chat-agent-panel__hero">
+          <span class="chat-agent-panel__avatar" aria-hidden="true">
+            ${renderAgentIdentityAvatar({
+              id: this.agentId ?? "agent",
+              avatar: this.assistantAvatar,
+              textAvatar: this.assistantAvatarText,
+              presence: this.avatarPresence,
+            })}
+          </span>
+          <a
+            class="chat-agent-panel__edit"
+            href=${editHref}
+            aria-label=${t("chat.sidePanel.agentEdit")}
+            title=${t("chat.sidePanel.agentEdit")}
+          >
+            ${icons.pencil}
+          </a>
+        </div>
         <div class="chat-agent-panel__identity">
           <strong class="chat-agent-panel__name">${name}</strong>
           <span
@@ -140,7 +171,7 @@ export class ChatAgentPanelElement extends OpenClawLightDomElement {
               connected ? "chat-agent-panel__status--connected" : ""
             }"
           >
-            <span class="chat-agent-panel__status-dot" aria-hidden="true"></span>
+            <span class="chat-agent-panel__status-dot" aria-hidden="true">${icons.zap}</span>
             ${t(connected ? "chat.sidePanel.agentConnected" : "chat.sidePanel.agentOffline")}
           </span>
         </div>
@@ -191,6 +222,7 @@ export class ChatAgentPanelElement extends OpenClawLightDomElement {
         icon: icons.activity,
         heading: t("chat.sidePanel.agentActivity"),
         description: t("chat.sidePanel.agentActivityEmpty"),
+        align: "start",
       });
     }
     return html`
@@ -234,6 +266,7 @@ export class ChatAgentPanelElement extends OpenClawLightDomElement {
         icon: icons.shieldQuestion,
         heading: t("chat.sidePanel.agentApprovals"),
         description: t("chat.sidePanel.agentApprovalsEmpty"),
+        align: "start",
       });
     }
     const snapshot = this.context.overlays.snapshot;

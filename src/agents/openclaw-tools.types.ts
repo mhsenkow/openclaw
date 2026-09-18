@@ -111,6 +111,12 @@ export type OpenClawToolsOptions = {
   skillWorkshop?: SkillWorkshopRunOptions;
   /** If true, nodes action="invoke" can call media-returning commands directly. */
   allowMediaInvokeCommands?: boolean;
+  /**
+   * If true, image/video/music generation tools omit agentSessionKey so
+   * tools.invoke / HTTP callers get a synchronous result with media paths
+   * instead of a detached "Background task started" handoff (#34365 contract).
+   */
+  inlineMediaGeneration?: boolean;
   /** Trusted sender identity bit for channel action auth. */
   senderIsOwner?: boolean;
   /** Server-owned operation-local origin for conversation-read visibility policy. */

@@ -482,6 +482,20 @@ export class ChatPane extends ChatPaneLayoutRender {
       modelSetupRequired:
         modelSetupRequired && !selectedSessionArchived && !restartRecoveryTombstoned,
       onModelSetup: () => this.context.navigate("model-setup"),
+      avatarSetupRequired:
+        !modelSetupRequired &&
+        !selectedSessionArchived &&
+        !restartRecoveryTombstoned &&
+        state.assistantAvatarStatus === "none" &&
+        !resolveChatAvatarUrl(state),
+      onAvatarSetup: () => {
+        const agentId = currentAgentId?.trim();
+        this.context.navigate("agents", {
+          search: agentId
+            ? `?agent=${encodeURIComponent(agentId)}&avatarStudio=1`
+            : "?avatarStudio=1",
+        });
+      },
       error: state.lastError,
       diskSpace: placementComposer.diskSpace,
       runError: catalogKey ? null : (state.chatRunError ?? placementComposer.runError),

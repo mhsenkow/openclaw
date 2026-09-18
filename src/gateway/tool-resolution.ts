@@ -83,6 +83,11 @@ export function resolveGatewayScopedTools(
     conversationReadOrigin?: ConversationReadInvocationOrigin;
     allowGatewaySubagentBinding?: boolean;
     allowMediaInvokeCommands?: boolean;
+    /**
+     * Run image/video/music generation inline for HTTP/tools.invoke callers that
+     * consume the tool result directly (no session wake delivery).
+     */
+    inlineMediaGeneration?: boolean;
     surface?: GatewayScopedToolSurface;
     /**
      * Liveness of the client grant this request authenticated with, supplied by
@@ -347,6 +352,7 @@ export function resolveGatewayScopedTools(
     allowGatewaySubagentBinding: params.allowGatewaySubagentBinding,
     skillWorkshop: params.skillWorkshop,
     allowMediaInvokeCommands: params.allowMediaInvokeCommands,
+    inlineMediaGeneration: params.inlineMediaGeneration,
     disablePluginTools: params.disablePluginTools,
     wrapBeforeToolCallHook: false,
     config: params.cfg,

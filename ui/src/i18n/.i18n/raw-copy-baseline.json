@@ -290,6 +290,76 @@
     },
     {
       "count": 1,
+      "kind": "object-property",
+      "name": "label",
+      "path": "ui/src/pages/agents/avatar-studio-catalog.ts",
+      "text": "CivitAI · character (NSFW / red)"
+    },
+    {
+      "count": 1,
+      "kind": "object-property",
+      "name": "label",
+      "path": "ui/src/pages/agents/avatar-studio-catalog.ts",
+      "text": "CivitAI · Flux (includes NSFW / red)"
+    },
+    {
+      "count": 1,
+      "kind": "object-property",
+      "name": "label",
+      "path": "ui/src/pages/agents/avatar-studio-catalog.ts",
+      "text": "CivitAI · Flux checkpoints"
+    },
+    {
+      "count": 1,
+      "kind": "object-property",
+      "name": "label",
+      "path": "ui/src/pages/agents/avatar-studio-catalog.ts",
+      "text": "CivitAI · portrait / character"
+    },
+    {
+      "count": 1,
+      "kind": "object-property",
+      "name": "label",
+      "path": "ui/src/pages/agents/avatar-studio-catalog.ts",
+      "text": "DeepInfra · FLUX.1 schnell"
+    },
+    {
+      "count": 1,
+      "kind": "object-property",
+      "name": "label",
+      "path": "ui/src/pages/agents/avatar-studio-catalog.ts",
+      "text": "fal · Flux Dev"
+    },
+    {
+      "count": 1,
+      "kind": "object-property",
+      "name": "label",
+      "path": "ui/src/pages/agents/avatar-studio-catalog.ts",
+      "text": "FLUX.1 dev"
+    },
+    {
+      "count": 1,
+      "kind": "object-property",
+      "name": "label",
+      "path": "ui/src/pages/agents/avatar-studio-catalog.ts",
+      "text": "FLUX.1 schnell"
+    },
+    {
+      "count": 1,
+      "kind": "object-property",
+      "name": "label",
+      "path": "ui/src/pages/agents/avatar-studio-catalog.ts",
+      "text": "Hugging Face · search Flux"
+    },
+    {
+      "count": 1,
+      "kind": "object-property",
+      "name": "label",
+      "path": "ui/src/pages/agents/avatar-studio-catalog.ts",
+      "text": "Stable Diffusion XL base"
+    },
+    {
+      "count": 1,
       "kind": "html-text",
       "name": "text",
       "path": "ui/src/pages/agents/memory/view.ts",

@@ -1,9 +1,6 @@
 // Provider auth runtime helpers implement OAuth loopback, token exchange, and auth persistence.
 import crypto from "node:crypto";
-import fs from "node:fs";
 import { createServer } from "node:http";
-import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
 import { normalizeProviderId } from "@openclaw/model-catalog-core/provider-id";
 import { resolveTimerTimeoutMs } from "@openclaw/normalization-core/number-coercion";
 import { ensureAuthProfileStore } from "../agents/auth-profiles/store-runtime.js";
@@ -268,27 +265,29 @@ type ResolveApiKeyForProvider =
 type GetRuntimeAuthForModel =
   typeof import("../plugins/runtime/runtime-model-auth.runtime.js").getRuntimeAuthForModelCore;
 type RuntimeModelAuthModule = typeof import("../plugins/runtime/runtime-model-auth.runtime.js");
-const RUNTIME_MODEL_AUTH_CANDIDATES = [
-  "./runtime-model-auth.runtime",
-  "../plugins/runtime/runtime-model-auth.runtime",
-] as const;
-const RUNTIME_MODEL_AUTH_EXTENSIONS = [".js", ".ts", ".mjs", ".mts", ".cjs", ".cts"] as const;
 
-function resolveRuntimeModelAuthModuleHref(): string {
-  const baseDir = path.dirname(fileURLToPath(import.meta.url));
-  for (const relativeBase of RUNTIME_MODEL_AUTH_CANDIDATES) {
-    for (const ext of RUNTIME_MODEL_AUTH_EXTENSIONS) {
-      const candidate = path.resolve(baseDir, `${relativeBase}${ext}`);
-      if (fs.existsSync(candidate)) {
-        return pathToFileURL(candidate).href;
-      }
-    }
-  }
-  throw new Error(`Unable to resolve runtime model auth module from ${import.meta.url}`);
-}
-
+/**
+ * Prefer the static source-layout specifier. In bundled `dist/` the runtime auth
+ * module is emitted as a content-hashed sibling chunk, so fall back to locating
+ * that sibling by prefix instead of assuming an exact filename.
+ */
 async function loadRuntimeModelAuthModule(): Promise<RuntimeModelAuthModule> {
-  return (await import(resolveRuntimeModelAuthModuleHref())) as RuntimeModelAuthModule;
+  try {
+    return (await import("../plugins/runtime/runtime-model-auth.runtime.js")) as RuntimeModelAuthModule;
+  } catch (sourceLayoutError) {
+    const baseDir = path.dirname(fileURLToPath(import.meta.url));
+    const sibling = fs
+      .readdirSync(baseDir)
+      .find(
+        (entry) => entry.startsWith("runtime-model-auth.runtime") && /\.(mjs|cjs|js)$/.test(entry),
+      );
+    if (!sibling) {
+      throw sourceLayoutError;
+    }
+    return (await import(
+      pathToFileURL(path.join(baseDir, sibling)).href
+    )) as RuntimeModelAuthModule;
+  }
 }
 
 /**

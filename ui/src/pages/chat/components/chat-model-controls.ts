@@ -373,6 +373,18 @@ export function renderChatModelControls(props: ChatModelControlsProps) {
     if (typeof catalogEntry?.supportsTools === "boolean") {
       pickerOption.supportsTools = catalogEntry.supportsTools;
     }
+    if (typeof catalogEntry?.local === "boolean") {
+      pickerOption.local = catalogEntry.local;
+    }
+    if (typeof catalogEntry?.reasoning === "boolean") {
+      pickerOption.reasoning = catalogEntry.reasoning;
+    }
+    if (catalogEntry?.input?.length) {
+      pickerOption.input = catalogEntry.input;
+    }
+    if (catalogEntry?.tags?.length) {
+      pickerOption.tags = catalogEntry.tags;
+    }
     if (option.disabled) {
       pickerOption.disabled = true;
       pickerOption.unavailableReason = option.unavailableReason;

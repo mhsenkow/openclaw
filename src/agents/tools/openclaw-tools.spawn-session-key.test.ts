@@ -312,4 +312,24 @@ describe("createOpenClawTools sessions_spawn session-key selection", () => {
       expect.objectContaining({ agentSessionKey: policyKey }),
     );
   });
+
+  it("omits media agentSessionKey when inlineMediaGeneration is set", () => {
+    // HTTP / tools.invoke need synchronous media paths in the tool result.
+    createOpenClawTools({
+      agentSessionKey: "agent:main:main",
+      inlineMediaGeneration: true,
+      disableMessageTool: true,
+      disablePluginTools: true,
+    });
+
+    for (const [name, captured] of [
+      ["image_generate", mocks.imageGenerateToolOptions],
+      ["video_generate", mocks.videoGenerateToolOptions],
+      ["music_generate", mocks.musicGenerateToolOptions],
+    ] as const) {
+      expect(captured, `${name} tool should be constructed`).toHaveBeenCalledWith(
+        expect.objectContaining({ agentSessionKey: undefined }),
+      );
+    }
+  });
 });

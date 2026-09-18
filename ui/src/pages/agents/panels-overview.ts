@@ -68,6 +68,7 @@ export function renderAgentOverview(params: {
   onIdentityFieldChange: (field: "name" | "emoji", value: string) => void;
   onIdentityAvatarSelect: (file: File) => void;
   onIdentitySave: () => void;
+  onOpenAvatarStudio?: () => void;
   onModelChange: (agentId: string, modelId: string | null) => void;
   onModelFallbacksChange: (agentId: string, fallbacks: string[]) => void;
   onModelCatalogOpen: () => void;
@@ -189,6 +190,18 @@ export function renderAgentOverview(params: {
               : nothing
           }
           <div class="agent-identity-editor__actions">
+            ${
+              params.onOpenAvatarStudio && params.canUpdateIdentity
+                ? html`<button
+                    type="button"
+                    class="btn btn--sm ${identityAvatarUrl ? "" : "primary"}"
+                    ?disabled=${identityBusy}
+                    @click=${() => params.onOpenAvatarStudio?.()}
+                  >
+                    ${t("agents.identity.createAvatar")}
+                  </button>`
+                : nothing
+            }
             <label class="btn btn--sm">
               ${
                 identityAvatarUrl

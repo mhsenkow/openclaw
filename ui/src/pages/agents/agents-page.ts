@@ -14,6 +14,7 @@ import type {
 import { subtitleForRoute, titleForRoute } from "../../app-navigation.ts";
 import { pathForAgentPanel } from "../../app-route-paths.ts";
 import { applicationContext, type ApplicationContext } from "../../app/context.ts";
+import { resolveControlUiAuthToken } from "../../app/control-ui-auth.ts";
 import {
   beginPanelRefresh,
   completePanelRefresh,
@@ -60,6 +61,20 @@ import { parseAgentSessionKey } from "../../lib/sessions/session-key.ts";
 import { GatewayPageController } from "../../lit/gateway-page-controller.ts";
 import { OpenClawLightDomElement } from "../../lit/openclaw-element.ts";
 import { SubscriptionsController } from "../../lit/subscriptions-controller.ts";
+import { connectAvatarImageProvider } from "./avatar-studio-provider.ts";
+import type { AvatarSheetQuadrant } from "./avatar-studio-sheet.ts";
+import {
+  closeAvatarStudio,
+  createAvatarStudioState,
+  importAvatarStudioPortrait,
+  openAvatarStudio,
+  prepareAvatarStudioGeneration,
+  refreshAvatarStudioProviderReady,
+  renderAvatarStudio,
+  runAvatarStudioGeneration,
+  selectedCloudProvider,
+  type AvatarStudioState,
+} from "./avatar-studio-view.ts";
 import {
   loadAgentFileContent,
   overwriteAgentFile,
@@ -134,6 +149,8 @@ class AgentsPage
   private readonly identityAvatarLoader = new IdentityAvatarController(this);
   @state() identitySaving = false;
   @state() identityError: string | null = null;
+  @state() avatarStudio: AvatarStudioState = createAvatarStudioState();
+  private avatarStudioQueryConsumed = false;
   @state() agentSkillsLoading = false;
   @state() agentSkillsError: string | null = null;
   @state() agentSkillsReport: SkillStatusReport | null = null;
@@ -844,6 +861,139 @@ class AgentsPage
     });
   }
 
+  private openAvatarStudio() {
+    if (!this.canCall("agents.update", "operator.admin")) {
+      return;
+    }
+    const agentId = this.resolveSelectedAgentId();
+    const identity = agentId ? this.agentIdentityById()[agentId] : null;
+    const name =
+      this.identityDraft.name?.trim() ||
+      identity?.name?.trim() ||
+      this.context.agents.state.agentsList?.agents.find((agent) => agent.id === agentId)?.name ||
+      "";
+    this.avatarStudio = openAvatarStudio(this.avatarStudio, name);
+  }
+
+  private closeAvatarStudio() {
+    this.avatarStudio = closeAvatarStudio(this.avatarStudio);
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("avatarStudio")) {
+      url.searchParams.delete("avatarStudio");
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `${url.pathname}${url.search}${url.hash}`,
+      );
+    }
+  }
+
+  private async prepareAvatarStudioGenerate() {
+    const client = this.client;
+    const agentId = this.resolveSelectedAgentId();
+    if (!client || !agentId || this.avatarStudio.busy) {
+      return;
+    }
+    this.avatarStudio = { ...this.avatarStudio, busy: true, error: null };
+    const next = await prepareAvatarStudioGeneration(this.avatarStudio, client, agentId);
+    this.avatarStudio = { ...next, busy: false };
+  }
+
+  private async connectAvatarStudioCloud() {
+    const client = this.client;
+    const agentId = this.resolveSelectedAgentId();
+    if (!client || !agentId || this.avatarStudio.busy) {
+      return;
+    }
+    const cloud = selectedCloudProvider(this.avatarStudio);
+    this.avatarStudio = { ...this.avatarStudio, busy: true, error: null };
+    const connected = await connectAvatarImageProvider({
+      client,
+      runtimeConfig: this.context.runtimeConfig,
+      agentId,
+      provider: cloud.cloudProvider,
+      apiKey: this.avatarStudio.apiKeyDraft,
+      model: cloud.cloudModel,
+      canDispatch: () =>
+        this.canCall("models.authSetApiKey", "operator.admin") &&
+        this.canCall("config.set", "operator.admin"),
+    });
+    if (!connected.ok) {
+      this.avatarStudio = { ...this.avatarStudio, busy: false, error: connected.error };
+      return;
+    }
+    const next = await refreshAvatarStudioProviderReady(this.avatarStudio, client, agentId);
+    this.avatarStudio = {
+      ...next,
+      busy: false,
+      apiKeyDraft: "",
+      error: next.generationReady ? null : next.generationHint,
+    };
+  }
+
+  private async runAvatarStudioGenerate() {
+    const client = this.client;
+    const agentId = this.resolveSelectedAgentId();
+    if (!client || !agentId || this.avatarStudio.busy) {
+      return;
+    }
+    this.avatarStudio = { ...this.avatarStudio, busy: true, error: null };
+    const next = await runAvatarStudioGeneration({
+      state: this.avatarStudio,
+      client,
+      agentId,
+      // Media must go through the Gateway resource base (Vite proxy path in ui:dev),
+      // not the UI route base — otherwise Vite returns index.html and decode fails.
+      resourceBasePath: this.context.resourceBasePath,
+      authToken: resolveControlUiAuthToken({
+        hello: this.context.gateway.snapshot.hello,
+        settings: { token: this.context.gateway.connection.token },
+        password: this.context.gateway.connection.password,
+      }),
+    });
+    this.avatarStudio = next;
+  }
+
+  private async importAvatarStudioFile(file: File) {
+    this.avatarStudio = { ...this.avatarStudio, busy: true, error: null };
+    const next = await importAvatarStudioPortrait(this.avatarStudio, file);
+    this.avatarStudio = { ...next, busy: false };
+  }
+
+  private async saveAvatarStudioSelection() {
+    const selected = this.avatarStudio.selected;
+    const avatar = selected === null ? null : (this.avatarStudio.options[selected] ?? null);
+    const agentId = this.resolveSelectedAgentId();
+    if (!avatar || !agentId || !this.canCall("agents.update", "operator.admin")) {
+      return;
+    }
+    this.avatarStudio = { ...this.avatarStudio, busy: true, error: null, phase: "saving" };
+    setIdentityDraftField(this, "name", this.avatarStudio.name.trim());
+    this.identityDraft = { ...this.identityDraft, avatar };
+    await this.saveIdentityDraft();
+    if (this.identityError) {
+      this.avatarStudio = {
+        ...this.avatarStudio,
+        busy: false,
+        phase: "pick",
+        error: this.identityError,
+      };
+      return;
+    }
+    this.avatarStudio = { ...this.avatarStudio, busy: false, phase: "done", error: null };
+  }
+
+  private maybeOpenAvatarStudioFromQuery() {
+    if (this.avatarStudio.open || this.avatarStudioQueryConsumed) {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("avatarStudio") === "1" && this.canCall("agents.update", "operator.admin")) {
+      this.avatarStudioQueryConsumed = true;
+      this.openAvatarStudio();
+    }
+  }
+
   private resetSelectionState() {
     this.gateway.invalidate();
     this.resetModelCatalog();
@@ -1041,6 +1191,7 @@ class AgentsPage
       canRunCron: this.canCall("cron.run", "operator.admin"),
     };
     this.syncGitHubIdentity(selectedAgentId);
+    this.maybeOpenAvatarStudioFromQuery();
     return html`
       <section class="content-header">
         <div>
@@ -1231,6 +1382,44 @@ class AgentsPage
               }
             },
             onIdentitySave: () => this.saveIdentityDraft(),
+            onOpenAvatarStudio: () => this.openAvatarStudio(),
+            avatarStudio: renderAvatarStudio({
+              state: this.avatarStudio,
+              onClose: () => this.closeAvatarStudio(),
+              onPhase: (phase) => {
+                this.avatarStudio = { ...this.avatarStudio, phase, error: null };
+              },
+              onStyle: (styleId) => {
+                this.avatarStudio = { ...this.avatarStudio, styleId };
+              },
+              onName: (name) => {
+                this.avatarStudio = { ...this.avatarStudio, name };
+              },
+              onPrepareGenerate: () => void this.prepareAvatarStudioGenerate(),
+              onGenerate: () => void this.runAvatarStudioGenerate(),
+              onImport: (file) => void this.importAvatarStudioFile(file),
+              onSelect: (quadrant: AvatarSheetQuadrant) => {
+                this.avatarStudio = { ...this.avatarStudio, selected: quadrant };
+              },
+              onSave: () => void this.saveAvatarStudioSelection(),
+              onOpenModelSetup: () => this.context.navigate("model-setup"),
+              onCloudProvider: (cloudProviderId) => {
+                this.avatarStudio = { ...this.avatarStudio, cloudProviderId };
+              },
+              onApiKey: (apiKeyDraft) => {
+                this.avatarStudio = { ...this.avatarStudio, apiKeyDraft };
+              },
+              onConnectCloud: () => void this.connectAvatarStudioCloud(),
+              onCatalogQuery: (catalogQuery) => {
+                this.avatarStudio = { ...this.avatarStudio, catalogQuery };
+              },
+              onToggleNsfw: (includeNsfw) => {
+                this.avatarStudio = { ...this.avatarStudio, includeNsfw };
+              },
+              onOpenProvider: () => {
+                this.avatarStudio = { ...this.avatarStudio, phase: "provider", error: null };
+              },
+            }),
             onChannelsRefresh: () => void this.context.channels.refresh(false),
             onOpenMemoryImport: () => this.context.navigate("memory-import"),
             onOpenMemorySettings: () => this.context.navigate("memory"),

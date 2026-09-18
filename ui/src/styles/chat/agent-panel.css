@@ -3,35 +3,67 @@ openclaw-chat-agent-panel {
 }
 
 .chat-agent-panel {
+  /* Size against this column, not the viewport — narrow docks and wide
+     viewports both need Muse-like proportions inside the panel itself. */
+  container-type: size;
+  container-name: agent-panel;
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100%;
+  min-width: 0;
   min-height: 0;
   background: var(--bg);
   color: var(--text);
   border-inline-start: 1px solid var(--border);
+  --agent-panel-pad-x: clamp(12px, 6.5cqw, 20px);
+  --agent-panel-pad-top: clamp(16px, 3.5cqh, 28px);
+  --agent-panel-pad-bottom: clamp(12px, 2cqh, 18px);
+  --agent-panel-gap: clamp(8px, 1.2cqh, 12px);
+  --agent-panel-avatar: clamp(56px, 30cqw, 96px);
+  --agent-panel-edit: clamp(22px, 9cqw, 28px);
+  --agent-panel-name: clamp(16px, 6.5cqw, 20px);
+  --agent-panel-status: clamp(12px, 4.2cqw, 13px);
+  --agent-panel-tab-pad-y: clamp(6px, 1cqh, 8px);
+  --agent-panel-tab-pad-x: clamp(10px, 4.5cqw, 14px);
+  --panel-empty-justify: flex-start;
+  --panel-empty-pad-top: clamp(16px, 3cqh, 36px);
+  --panel-empty-pad-inline: var(--agent-panel-pad-x);
 }
 
 .chat-agent-panel__header {
   display: flex;
   flex: none;
-  gap: 12px;
+  flex-direction: column;
+  gap: var(--agent-panel-gap);
   align-items: center;
-  padding: 14px 16px 12px;
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 96%, var(--card));
+  justify-content: center;
+  padding: var(--agent-panel-pad-top) var(--agent-panel-pad-x) var(--agent-panel-pad-bottom);
+  text-align: center;
+  background: transparent;
+  border-bottom: 0;
+}
+
+.chat-agent-panel__hero {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
 }
 
 .chat-agent-panel__avatar {
   display: flex;
   flex: none;
-  width: 36px;
-  height: 36px;
+  width: var(--agent-panel-avatar);
+  height: var(--agent-panel-avatar);
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 70%, transparent);
 }
 
 .chat-agent-panel__avatar .agent-identity-avatar,
+.chat-agent-panel__avatar .identity-avatar--agent,
 .chat-agent-panel__avatar img,
 .chat-agent-panel__avatar span {
   width: 100%;
@@ -39,20 +71,51 @@ openclaw-chat-agent-panel {
   border-radius: inherit;
 }
 
+.chat-agent-panel__edit {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--agent-panel-edit);
+  height: var(--agent-panel-edit);
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--card) 92%, var(--bg));
+  color: var(--text);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--bg) 40%, transparent);
+  cursor: pointer;
+}
+
+.chat-agent-panel__edit:hover {
+  background: var(--card);
+  color: var(--text-strong);
+}
+
+.chat-agent-panel__edit svg {
+  width: 50%;
+  height: 50%;
+}
+
 .chat-agent-panel__identity {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
+  align-items: center;
   min-width: 0;
+  max-width: 100%;
 }
 
 .chat-agent-panel__name {
   overflow: hidden;
-  font-size: 14px;
-  font-weight: 550;
-  letter-spacing: 0.01em;
-  line-height: 1.2;
+  max-width: 100%;
+  margin: 0;
+  font-size: var(--agent-panel-name);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-strong);
@@ -62,53 +125,73 @@ openclaw-chat-agent-panel {
   display: inline-flex;
   gap: 6px;
   align-items: center;
+  justify-content: center;
   color: var(--muted);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: var(--agent-panel-status);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .chat-agent-panel__status-dot {
-  width: 6px;
-  height: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2em;
+  height: 1.2em;
   border-radius: 50%;
-  background: var(--muted);
+  background: color-mix(in srgb, var(--muted) 35%, transparent);
+  color: var(--bg);
+}
+
+.chat-agent-panel__status-dot svg {
+  width: 62%;
+  height: 62%;
 }
 
 .chat-agent-panel__status--connected {
-  color: var(--ok, var(--success, var(--accent)));
+  color: var(--muted);
 }
 
 .chat-agent-panel__status--connected .chat-agent-panel__status-dot {
-  background: currentColor;
+  background: var(--ok, var(--success, #34c759));
+  color: #fff;
 }
 
 .chat-agent-panel__tabs {
   display: flex;
   flex: none;
   gap: 0;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--border);
+  align-items: stretch;
+  width: calc(100% - (2 * var(--agent-panel-pad-x)));
+  max-width: 100%;
+  margin: 0 auto clamp(10px, 1.5cqh, 14px);
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 70%, var(--bg));
 }
 
 .chat-agent-panel__tab {
   display: inline-flex;
+  flex: 1 1 0;
   gap: 6px;
   align-items: center;
-  padding: 10px 12px;
+  justify-content: center;
+  min-width: 0;
+  padding: var(--agent-panel-tab-pad-y) var(--agent-panel-tab-pad-x);
   border: 0;
-  border-bottom: 1px solid transparent;
-  margin-bottom: -1px;
-  border-radius: 0;
+  border-radius: 999px;
+  margin: 0;
   background: transparent;
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 550;
-  letter-spacing: 0.02em;
+  font-size: clamp(11px, 4cqw, 12px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
   transition:
     color var(--duration-fast) var(--ease-out),
-    border-color var(--duration-fast) var(--ease-out);
+    background-color var(--duration-fast) var(--ease-out);
 }
 
 .chat-agent-panel__tab:hover {
@@ -118,8 +201,9 @@ openclaw-chat-agent-panel {
 
 .chat-agent-panel__tab.is-active {
   color: var(--text-strong);
-  background: transparent;
-  border-bottom-color: var(--accent);
+  background: color-mix(in srgb, var(--bg) 88%, var(--card));
+  border-bottom-color: transparent;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 55%, transparent);
 }
 
 .chat-agent-panel__tab-badge {
@@ -129,7 +213,7 @@ openclaw-chat-agent-panel {
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  border-radius: 2px;
+  border-radius: 999px;
   background: var(--accent);
   color: var(--accent-foreground, var(--bg));
   font-size: 10px;
@@ -137,59 +221,73 @@ openclaw-chat-agent-panel {
 }
 
 .chat-agent-panel__body {
-  flex: 1;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   min-height: 0;
   overflow: auto;
+}
+
+.chat-agent-panel__body > openclaw-panel-empty-state {
+  flex: 1 1 auto;
+  min-height: 100%;
 }
 
 .chat-agent-panel__feed,
 .chat-agent-panel__approvals {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 12px;
-  padding: 12px;
+  padding: 4px var(--agent-panel-pad-x) 16px;
 }
 
 .chat-agent-panel__day {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .chat-agent-panel__day-label {
   margin: 0;
-  color: var(--muted);
-  font-size: 11px;
+  color: var(--text-strong);
+  font-size: 13px;
   font-weight: 650;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .chat-agent-panel__row {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto;
-  gap: 8px;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 10px;
   align-items: start;
-  padding: 8px 10px;
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--card) 88%, transparent);
+  padding: 10px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .chat-agent-panel__row-icon {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--card) 80%, var(--bg));
   color: var(--muted);
 }
 
 .chat-agent-panel__row-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .chat-agent-panel__row-title {
   overflow: hidden;
   font-size: 13px;
-  font-weight: 550;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -214,4 +312,34 @@ openclaw-chat-agent-panel {
 
 .chat-agent-panel__row--error .chat-agent-panel__row-icon {
   color: var(--danger);
+}
+
+/* Narrow column: tighter type and denser activity rows. */
+@container agent-panel (max-width: 280px) {
+  .chat-agent-panel__row {
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .chat-agent-panel__row-time {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .chat-agent-panel__row-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+  }
+}
+
+/* Short panel: shrink the hero so Activity still gets room. */
+@container agent-panel (max-height: 560px) {
+  .chat-agent-panel {
+    --agent-panel-avatar: clamp(48px, 22cqw, 72px);
+    --agent-panel-pad-top: clamp(10px, 2cqh, 16px);
+    --agent-panel-pad-bottom: 10px;
+    --agent-panel-gap: 6px;
+    --panel-empty-pad-top: 12px;
+  }
 }

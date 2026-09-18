@@ -1,9 +1,12 @@
 import { isRecord, normalizeOptionalString, readStringValue } from "@openclaw/normalization-core";
+import { SIDEBAR_AGENT_DEFAULT_WIDTH_PX } from "./sidebar-layout-geometry.ts";
 import type { SidebarLayout, SidebarPanel, SidebarSlotId } from "./sidebar-layout-types.ts";
 
 const DEFAULT_WIDTH = 480;
 const DEFAULT_HEIGHT = 360;
 const MIN_WIDTH = 260;
+/** First muse Agent seed; bump agent-only columns still on this width. */
+const LEGACY_MUSE_AGENT_WIDTH = 260;
 const MIN_HEIGHT = 220;
 const MAX_WIDTH = 1_200;
 const MAX_HEIGHT = 800;
@@ -130,6 +133,12 @@ export function normalizeSidebarLayout(value: unknown): SidebarLayout {
     (conversation && conversation.id !== mainPanelId
       ? conversation
       : panels.find((panel) => panel.id !== mainPanelId));
+  const sidePanels = panels.filter((panel) => panel.slot !== "conversation");
+  const agentOnlySide =
+    sidePanels.length > 0 && sidePanels.every((panel) => panel.slot === "agent");
+  if (agentOnlySide && width === LEGACY_MUSE_AGENT_WIDTH) {
+    width = SIDEBAR_AGENT_DEFAULT_WIDTH_PX;
+  }
   const columns =
     columnId || panels.length > 0 || value.open === true
       ? [

@@ -5,6 +5,7 @@ import { OpenClawLitElement } from "../lit/openclaw-element.ts";
 class OpenClawPanelEmptyState extends OpenClawLitElement {
   @property() heading = "";
   @property() description = "";
+  @property({ reflect: true }) align: "center" | "start" = "center";
 
   override render() {
     return html`<div class="empty-state" role="status">
@@ -34,11 +35,17 @@ class OpenClawPanelEmptyState extends OpenClawLitElement {
       flex: 1 1 auto;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 24px;
+      justify-content: var(--panel-empty-justify, center);
+      padding: var(--panel-empty-pad-block, 24px) var(--panel-empty-pad-inline, 24px);
       color: var(--muted);
       text-align: center;
       transform: translateY(-10px);
+    }
+
+    :host([align="start"]) .empty-state {
+      justify-content: var(--panel-empty-justify, flex-start);
+      padding-top: var(--panel-empty-pad-top, 36px);
+      transform: none;
     }
 
     .empty-state__icon {
@@ -87,10 +94,12 @@ export function renderPanelEmptyState(params: {
   heading: string;
   description: string;
   action?: TemplateResult | typeof nothing;
+  align?: "center" | "start";
 }) {
   return html`<openclaw-panel-empty-state
     .heading=${params.heading}
     .description=${params.description}
+    align=${params.align ?? "center"}
   >
     ${params.icon}${
       params.action != null && params.action !== nothing

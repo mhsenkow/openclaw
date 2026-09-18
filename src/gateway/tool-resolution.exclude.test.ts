@@ -149,6 +149,21 @@ describe("resolveGatewayScopedTools excludeToolNames", () => {
     },
   );
 
+  it("forwards inlineMediaGeneration so HTTP tools.invoke can return media paths", () => {
+    resolveGatewayScopedTools({
+      cfg: {} as OpenClawConfig,
+      sessionKey: "agent:main:main",
+      surface: "http",
+      allowMediaInvokeCommands: true,
+      inlineMediaGeneration: true,
+    });
+
+    expect(readCreateToolsArgs()).toMatchObject({
+      allowMediaInvokeCommands: true,
+      inlineMediaGeneration: true,
+    });
+  });
+
   it("hands loopback ask_user the originating-channel prompt sender", () => {
     resolveGatewayScopedTools({
       cfg: {} as OpenClawConfig,

@@ -175,6 +175,8 @@ export type ChatThreadProps = ChatSendStatusActions & {
   onOpenSession?: (sessionKey: string) => void;
   modelSetupRequired?: boolean;
   onModelSetup?: () => void;
+  avatarSetupRequired?: boolean;
+  onAvatarSetup?: () => void;
   backgroundTasks?: BackgroundTasksProps;
 };
 

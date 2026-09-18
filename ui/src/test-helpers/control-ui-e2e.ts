@@ -2055,6 +2055,33 @@ function installControlUiMockGateway(
     }
     if (method === "sessions.create" || method === "sessions.catalog.continue") {
       recordMaterializedSession(params, response);
+      if (
+        method === "sessions.create" &&
+        isRecord(response) &&
+        typeof response.key === "string" &&
+        response.key.trim()
+      ) {
+        // New sessions must not inherit the default fixture transcript; otherwise
+        // Start session opens a chat that looks like an unrelated existing thread.
+        scenario.sessionTranscripts[response.key] ??= { messages: [] };
+        const message =
+          isRecord(params) && typeof params.message === "string" ? params.message.trim() : "";
+        if (message && response.runStarted !== false && response.runError === undefined) {
+          const runId =
+            (typeof response.runId === "string" && response.runId.trim()) ||
+            (typeof params.idempotencyKey === "string" && params.idempotencyKey.trim()) ||
+            `mock-create:${response.key}`;
+          response.ok = true;
+          response.runStarted = true;
+          response.runId = runId;
+          commitDefaultChatInput({
+            ...params,
+            sessionKey: response.key,
+            idempotencyKey: runId,
+            message,
+          });
+        }
+      }
     }
     return response;
   }
@@ -2117,10 +2144,23 @@ function installControlUiMockGateway(
       return;
     }
     const label = isRecord(params) && typeof params.label === "string" ? params.label.trim() : "";
+    const displayName =
+      (isRecord(params) && typeof params.displayName === "string"
+        ? params.displayName.trim()
+        : "") ||
+      label ||
+      (isRecord(params) && typeof params.message === "string"
+        ? params.message.trim().replace(/\s+/g, " ").slice(0, 80)
+        : "");
     sessions.materialize(key, {
       ...(isRecord(response.entry) ? response.entry : {}),
       ...(typeof response.sessionId === "string" ? { sessionId: response.sessionId } : {}),
-      ...(label ? { displayName: label, label } : {}),
+      ...(displayName
+        ? {
+            displayName,
+            ...(label ? { label } : {}),
+          }
+        : {}),
       hasActiveRun: response.runStarted === true,
       status: response.runStarted === true ? "running" : "done",
     });
@@ -2661,10 +2701,10 @@ function installControlUiMockGateway(
             : scenario.defaultAgentId;
         const requestedKey =
           isRecord(params) && typeof params.key === "string" ? params.key.trim() : "";
-        const response = {
+        return {
+          ok: true as const,
           key: requestedKey || `agent:${agentId}:mock-created-${sessions.materializedCount() + 1}`,
         };
-        return response;
       }
       case "sessions.list":
         return applySessionPatches(

@@ -161,4 +161,35 @@ describe("chat picker overlay", () => {
     expect(model.open).toBe(false);
     expect(document.activeElement).toBe(modelTrigger);
   });
+
+  it("keeps the portaled model chooser open when clicking its shell chrome", () => {
+    const composer = document.createElement("div");
+    composer.className = "agent-chat__input";
+    const modelPicker = document.createElement("details");
+    modelPicker.className = "chat-controls__model-picker";
+    const modelTrigger = document.createElement("summary");
+    modelPicker.append(modelTrigger);
+    composer.append(modelPicker);
+    document.body.append(composer);
+
+    const portal = document.createElement("div");
+    portal.id = "openclaw-chat-model-picker-portal";
+    const shell = document.createElement("div");
+    shell.className = "chat-model-picker-modal__shell";
+    const gear = document.createElement("button");
+    gear.type = "button";
+    gear.className = "chat-controls__provider-settings";
+    shell.append(gear);
+    portal.append(shell);
+    document.body.append(portal);
+
+    modelPicker.open = true;
+    ensureChatComposerPickerDismissal();
+
+    gear.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, composed: true }));
+    expect(modelPicker.open).toBe(true);
+
+    document.body.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, composed: true }));
+    expect(modelPicker.open).toBe(false);
+  });
 });

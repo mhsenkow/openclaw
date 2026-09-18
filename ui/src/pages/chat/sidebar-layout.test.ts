@@ -402,7 +402,7 @@ describe("sidebar layout", () => {
   it("seeds a first-run agent panel at muse width", () => {
     const layout = createDefaultAgentSidebarLayout();
     expect(isSidebarSlotVisible(layout, "agent")).toBe(true);
-    expect(layout.columns[0]?.width).toBe(260);
+    expect(layout.columns[0]?.width).toBe(320);
     expect(normalizeSidebarLayout(layout)).toEqual({
       ...layout,
       dock: "right",

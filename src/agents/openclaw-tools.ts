@@ -182,7 +182,10 @@ export function createOpenClawTools(options?: OpenClawToolsOptions): AnyAgentToo
     config: options?.config,
     agentDir: options?.agentDir,
     authProfileStore: options?.authProfileStore,
-    agentSessionKey: mediaGenerationAgentSessionKey,
+    // HTTP / tools.invoke callers need the tool result itself (media paths).
+    // Binding a session key detaches generation into a chat wake that Control UI
+    // cannot consume — keep media generation inline on that surface.
+    agentSessionKey: options?.inlineMediaGeneration ? undefined : mediaGenerationAgentSessionKey,
     requesterAgentId: sessionAgentId,
     requesterOrigin: widgetPresentation.deliveryContext ?? undefined,
     workspaceDir,

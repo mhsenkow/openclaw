@@ -1412,6 +1412,8 @@ export const en: TranslationMap & {
       schedulingSubtitle: "Workspace and scheduling targets.",
     },
     identity: agentEn.identity,
+    avatarStudio: agentEn.avatarStudio,
+    avatarPresence: agentEn.avatarPresence,
     overview: {
       title: "Overview",
       subtitle: "Workspace paths and identity metadata.",
@@ -4695,6 +4697,7 @@ export const en: TranslationMap & {
       agentApprovals: "Approvals",
       agentConnected: "Connected",
       agentOffline: "Offline",
+      agentEdit: "Edit agent",
       agentActivityEmpty: "No recent activity for this agent.",
       agentApprovalsEmpty: "Nothing needs review right now.",
       tasks: "Tasks",

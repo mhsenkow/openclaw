@@ -47,6 +47,9 @@ type ChatWelcomeProps = {
   sessionHost?: UiSessionDefaultsHost | null;
   modelSetupRequired?: boolean;
   onModelSetup?: () => void;
+  /** When the agent has no portrait yet, offer the avatar studio. */
+  avatarSetupRequired?: boolean;
+  onAvatarSetup?: () => void;
   onDraftChange: (next: string) => void;
   onSend: () => void;
   onOpenSession?: (sessionKey: string) => void;
@@ -205,6 +208,25 @@ export function renderWelcomeState(props: ChatWelcomeProps) {
               </button>`
             : nothing
         }
+      </div>
+    `;
+  }
+  if (props.avatarSetupRequired && props.onAvatarSetup) {
+    return html`
+      <div class="agent-chat__welcome agent-chat__welcome--setup" role="status">
+        ${renderWelcomeHero({
+          currentAgentId: props.currentAgentId,
+          agents: props.agents,
+          assistantName: props.assistantName,
+          assistantAvatar: props.assistantAvatar,
+          assistantAvatarUrl: props.assistantAvatarUrl,
+          hint: t("agents.avatarPresence.createCtaBody"),
+        })}
+        <h2>${t("agents.avatarPresence.createCtaTitle")}</h2>
+        <button class="btn primary" type="button" @click=${props.onAvatarSetup}>
+          ${t("agents.avatarPresence.createCtaAction")}
+        </button>
+        ${props.composer ?? nothing}
       </div>
     `;
   }

@@ -365,6 +365,53 @@ describe("mock gateway stateful sessions", () => {
     },
   );
 
+  it("starts sessions.create with the submitted message instead of the fixture transcript", async ({
+    gatewayPage,
+  }) => {
+    const { execute } = gatewayPage;
+    execute(
+      createControlUiMockGatewayInitScript({
+        historyMessages: [{ role: "assistant", content: "fixture" }],
+      }),
+    );
+    const { frames, send } = gatewayPage.connect();
+    await flushMockTimers();
+    send("create-with-message", "sessions.create", {
+      agentId: "main",
+      message: "Plan a weekend trip to Portland",
+      idempotencyKey: "new-session-run",
+    });
+    await flushMockTimers();
+    expect(frames.find((frame) => frame.id === "create-with-message")?.payload).toMatchObject({
+      ok: true,
+      key: expect.stringContaining("mock-created"),
+      runStarted: true,
+      runId: "new-session-run",
+    });
+    const createdKey = (
+      frames.find((frame) => frame.id === "create-with-message")?.payload as { key?: string }
+    )?.key;
+    expect(createdKey).toBeTruthy();
+    send("list-after-create", "sessions.list", { agentId: "main" });
+    await flushMockTimers();
+    const listed = frames.find((frame) => frame.id === "list-after-create")?.payload as {
+      sessions?: Array<{ key?: string; displayName?: string }>;
+    };
+    expect(listed.sessions?.find((row) => row.key === createdKey)?.displayName).toBe(
+      "Plan a weekend trip to Portland",
+    );
+    send("history-after-create", "chat.history", { sessionKey: createdKey });
+    await flushMockTimers();
+    const history = frames.find((frame) => frame.id === "history-after-create")?.payload as {
+      messages?: Array<{ content?: string }>;
+      sessionInfo?: { displayName?: string };
+    };
+    expect(history.messages?.map((message) => message.content)).toEqual([
+      "Plan a weekend trip to Portland",
+    ]);
+    expect(history.sessionInfo?.displayName).toBe("Plan a weekend trip to Portland");
+  });
+
   it("cycles subscription-scoped session events and stops after unsubscribe", async ({
     gatewayPage,
   }) => {
